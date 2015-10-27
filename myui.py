@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Form implementation generated from reading ui file 'mainwindow.ui'
@@ -81,22 +82,123 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.m_widget.GetRenderWindow().AddRenderer(self.ren)
         self.iren = self .m_widget.GetRenderWindow().GetInteractor()
  
+        # Plate of the car
         # Create source
-        source = vtk.vtkSphereSource()
-        source.SetCenter(0, 0, 0)
-        source.SetRadius(5.0)
+        plate = vtk.vtkCubeSource()
+        plate.SetXLength(100)
+        plate.SetYLength(60)
+        plate.SetZLength(6)
+        plate.SetCenter(50, 0, -3)
  
         # Create a mapper
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(source.GetOutputPort())
+        plateMapper = vtk.vtkPolyDataMapper()
+        plateMapper.SetInputConnection(plate.GetOutputPort())
+
+        # Create a transform
+        plateTransform = vtk.vtkTransform()
  
         # Create an actor
-        actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
+        plateActor = vtk.vtkActor()
+        plateActor.SetMapper(plateMapper)
+        plateActor.SetUserTransform(plateTransform)
+        plateActor.GetProperty().SetColor(0.69, 0.77, 0.87)
  
-        self.ren.AddActor(actor)
- 
-        self.ren.ResetCamera()
+        self.ren.AddActor(plateActor)
+
+        # Two poles
+        # Left pole
+        # Create source
+        poleL = vtk.vtkCylinderSource()
+        poleL.SetRadius(2.0)
+        poleL.SetHeight(50.0)
+        poleL.SetCenter(10, 0, 0)
+        poleL.SetResolution(100.0)
+
+        # Create a mapper
+        poleLMapper = vtk.vtkPolyDataMapper()
+        poleLMapper.SetInputConnection(poleL.GetOutputPort())
+
+        # Create a transform
+        poleLTransform = vtk.vtkTransform()
+        poleLTransform.SetInput(plateTransform)
+
+        # Create an actor
+        poleLActor = vtk.vtkActor()
+        poleLActor.SetMapper(poleLMapper)
+        poleLActor.SetUserTransform(poleLTransform)
+
+        poleLTransform.RotateX(90.0)
+        poleLTransform.Translate(0.0, 25.0, 0.0)
+
+        self.ren.AddActor(poleLActor)
+
+        # Right pole
+        # Create source
+        poleR = vtk.vtkCylinderSource()
+        poleR.SetRadius(2.0)
+        poleR.SetHeight(50.0)
+        poleR.SetCenter(90, 0, 0)
+        poleR.SetResolution(100.0)
+
+        # Create a mapper
+        poleRMapper = vtk.vtkPolyDataMapper()
+        poleRMapper.SetInputConnection(poleR.GetOutputPort())
+
+        # Create a transform
+        poleRTransform = vtk.vtkTransform()
+        poleRTransform.SetInput(plateTransform)
+
+        # Create an actor
+        poleRActor = vtk.vtkActor()
+        poleRActor.SetMapper(poleRMapper)
+        poleRActor.SetUserTransform(poleRTransform)
+
+        poleRTransform.RotateX(90.0)
+        poleRTransform.Translate(0.0, 25.0, 0.0)
+
+        self.ren.AddActor(poleRActor)
+
+        # 4 car's wheels
+        wheel = []
+        wheelMapper = []
+        wheelTransform = []
+        wheelActor = []
+        for i in range(4):
+        	# Create source
+            wheel.append(vtk.vtkCylinderSource())
+            wheel[i].SetRadius(6.0)
+            wheel[i].SetHeight(3.0)
+            wheel[i].SetResolution(100.0)
+
+        	# Create a mapper
+            wheelMapper.append(vtk.vtkPolyDataMapper())
+            wheelMapper[i].SetInputConnection(wheel[i].GetOutputPort())
+
+            # Create a transform
+            wheelTransform.append(vtk.vtkTransform())
+            wheelTransform[i].SetInput(plateTransform)
+
+        	# Create an actor
+            wheelActor.append(vtk.vtkActor())
+            wheelActor[i].SetMapper(wheelMapper[i])
+            wheelActor[i].SetUserTransform(wheelTransform[i])
+            wheelActor[i].GetProperty().SetColor(1.0, 1.0, 0.6)
+
+            self.ren.AddActor(wheelActor[i])
+        
+        wheel[0].SetCenter(10, 25, -9.0)
+        wheel[1].SetCenter(90, 25, -9.0)
+        wheel[2].SetCenter(10, -25, -9.0)
+        wheel[3].SetCenter(90, -25, -9.0)
+
+        # Create a camera
+        #self.ren.ResetCamera()
+        camera = vtk.vtkCamera()
+        self.ren.SetActiveCamera(camera)
+        self.ren.GetActiveCamera().SetPosition(50, -300, 100)
+        self.ren.GetActiveCamera().SetFocalPoint(50, 0, 0)
+        self.ren.GetActiveCamera().SetViewUp(0, 0, 1)
+        self.ren.GetActiveCamera().UpdateViewport(self.ren)
 
 
 if __name__ == '__main__':
