@@ -78,9 +78,9 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.m_pushButton.setText(_translate("MainWindow", "Say Hi!", None))
 
     def setvtkWidget(self):
-    	self.ren = vtk .vtkRenderer()
+    	self.ren = vtk.vtkRenderer()
         self.m_widget.GetRenderWindow().AddRenderer(self.ren)
-        self.iren = self .m_widget.GetRenderWindow().GetInteractor()
+        self.iren = self.m_widget.GetRenderWindow().GetInteractor()
  
         # Plate of the car
         # Create source
@@ -98,12 +98,12 @@ class Ui_MainWindow(QtGui.QMainWindow):
         plateTransform = vtk.vtkTransform()
  
         # Create an actor
-        plateActor = vtk.vtkActor()
-        plateActor.SetMapper(plateMapper)
-        plateActor.SetUserTransform(plateTransform)
-        plateActor.GetProperty().SetColor(0.69, 0.77, 0.87)
+        self.plateActor = vtk.vtkActor()
+        self.plateActor.SetMapper(plateMapper)
+        self.plateActor.SetUserTransform(plateTransform)
+        self.plateActor.GetProperty().SetColor(0.69, 0.77, 0.87)
  
-        self.ren.AddActor(plateActor)
+        self.ren.AddActor(self.plateActor)
 
         # Two poles
         # Left pole
@@ -201,6 +201,36 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.ren.GetActiveCamera().UpdateViewport(self.ren)
 
 
+class car():
+	def __init__(self):
+		self.X = 0.0
+		self.Y = 0.0
+
+	def SetCenterPosition(self, cx, cy):
+	    self.X = cx
+	    self.Y = cy
+
+class vtkTimerCallback():
+	def __init__(self):
+		m_car.SetCenterPosition(0.0, 0.0)
+		self.timer_count = 0
+
+	def execute(self, obj, event):
+		print(self.timer_count)
+		#self.actor.SetPosition(self.timer_count, 0.0, 0.0)
+		self.actor.GetUserTransform().Identity()
+		self.actor.GetUserTransform().Translate(self.timer_count, 0.0, 0.0)
+		iren = obj
+		iren.GetRenderWindow().Render()
+		self.timer_count += 1
+
+	def restart(self, obj, event):
+		# The mouse interaction (zoom)stops the timer
+		# Restart the timer after the mouse interaction event
+		iren = obj
+		iren.ResetTimer(timerId)
+
+
 if __name__ == '__main__':
     app = QtGui.QApplication (sys.argv)
  
@@ -209,5 +239,16 @@ if __name__ == '__main__':
     window.show()
 
     window.iren.Initialize()
+
+    m_car = car()
+
+    # Sign up to receive TimerEvent
+    cb = vtkTimerCallback()
+    cb.actor = window.plateActor
+    window.iren.AddObserver('TimerEvent', cb.execute)
+    window.iren.AddObserver('EndInteractionEvent', cb.restart)
+    timerId = window.iren.CreateRepeatingTimer(1000)
+
+    window.iren.Start()
  
     sys.exit(app.exec_())
