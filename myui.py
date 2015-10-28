@@ -11,6 +11,7 @@ import sys
 import vtk
 from PyQt4 import QtCore, QtGui
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+import doublePendulum
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -82,6 +83,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.m_widget.GetRenderWindow().AddRenderer(self.ren)
         self.iren = self.m_widget.GetRenderWindow().GetInteractor()
  
+        # The car model (includes a plate, two poles and four wheel)
         # Plate of the car
         # Create source
         plate = vtk.vtkCubeSource()
@@ -109,7 +111,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
         # Left pole
         # Create source
         poleL = vtk.vtkCylinderSource()
-        poleL.SetRadius(2.0)
+        poleL.SetRadius(1.0)
         poleL.SetHeight(50.0)
         poleL.SetCenter(10, 0, 0)
         poleL.SetResolution(100.0)
@@ -135,7 +137,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
         # Right pole
         # Create source
         poleR = vtk.vtkCylinderSource()
-        poleR.SetRadius(2.0)
+        poleR.SetRadius(1.0)
         poleR.SetHeight(50.0)
         poleR.SetCenter(90, 0, 0)
         poleR.SetResolution(100.0)
@@ -191,6 +193,42 @@ class Ui_MainWindow(QtGui.QMainWindow):
         wheel[2].SetCenter(10, -25, -9.0)
         wheel[3].SetCenter(90, -25, -9.0)
 
+
+        # Two spheres' model
+        # Left sphere
+        # Create source
+        sphereL = vtk.vtkSphereSource()
+        sphereL.SetRadius(5)
+        sphereL.SetCenter(0, 0, 30)
+
+        # Create a mapper
+        sphereLMapper = vtk.vtkPolyDataMapper()
+        sphereLMapper.SetInputConnection(sphereL.GetOutputPort())
+
+        # Create an actor
+        sphereLActor = vtk.vtkActor()
+        sphereLActor.SetMapper(sphereLMapper)
+        sphereLActor.GetProperty().SetColor(1.0, 0.2, 0.2)
+
+        self.ren.AddActor(sphereLActor)
+
+        # Right sphere
+        # Create source
+        sphereR = vtk.vtkSphereSource()
+        sphereR.SetRadius(5)
+        sphereR.SetCenter(100, 0, 30)
+
+        # Create a mapper
+        sphereRMapper = vtk.vtkPolyDataMapper()
+        sphereRMapper.SetInputConnection(sphereR.GetOutputPort())
+
+        # Create an actor
+        sphereRActor = vtk.vtkActor()
+        sphereRActor.SetMapper(sphereRMapper)
+        sphereRActor.GetProperty().SetColor(0.0, 0.5, 1.0)
+
+        self.ren.AddActor(sphereRActor)
+
         # Create a camera
         #self.ren.ResetCamera()
         camera = vtk.vtkCamera()
@@ -219,7 +257,7 @@ class vtkTimerCallback():
 		print(self.timer_count)
 		#self.actor.SetPosition(self.timer_count, 0.0, 0.0)
 		self.actor.GetUserTransform().Identity()
-		self.actor.GetUserTransform().Translate(self.timer_count, 0.0, 0.0)
+		self.actor.GetUserTransform().Translate(float(self.timer_count)/5, 0.0, 0.0)
 		iren = obj
 		iren.GetRenderWindow().Render()
 		self.timer_count += 1
