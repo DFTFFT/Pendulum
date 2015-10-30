@@ -11,7 +11,11 @@ import sys
 import vtk
 from PyQt4 import QtCore, QtGui
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 import doublePendulum
+
+from numpy import arange, sin, pi
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -31,6 +35,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
     def __init__(self):
 		QtGui.QMainWindow.__init__(self)
 		self.setupUi(self)
+		self.timer_count = 0
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
@@ -63,22 +68,52 @@ class Ui_MainWindow(QtGui.QMainWindow):
         #toolBar
         self.mainToolBar = QtGui.QToolBar(MainWindow)
         self.mainToolBar.setObjectName(_fromUtf8("mainToolBar"))
+        self.mainToolBar.setIconSize(QtCore.QSize(50, 50))
+        self.mainToolBar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
         MainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.mainToolBar)
+
+        self.actionStart = QtGui.QAction(MainWindow)
+
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/start.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionStart.setIcon(icon)
+        self.actionStart.setObjectName(_fromUtf8("actionStart"))
+
+        self.mainToolBar.addAction(self.actionStart)
+        #self.actionStop = QtGui.QAction(MainWindow)
+
 
         #statusBar
         self.statusBar = QtGui.QStatusBar(MainWindow)
         self.statusBar.setObjectName(_fromUtf8("statusBar"))
         MainWindow.setStatusBar(self.statusBar)
 
+        # Matplotlib plot
+        sc = MyStaticMplCanvas(self.centralWidget, width=5, height=4, dpi=50)
+
+        # Layout management
+        self.gridLayout = QtGui.QGridLayout(self.centralWidget)
+        self.gridLayout.setMargin(11)
+        self.gridLayout.setSpacing(6)
+        self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
+
+        self.gridLayout.addWidget(self.m_widget, 0, 0, 1, 1)
+        self.gridLayout.addWidget(sc, 0, 1, 1, 1)
+
+
+        #
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Pendulum Simulation", None))
         self.m_label.setText(_translate("MainWindow", "Hello world", None))
         self.m_pushButton.setText(_translate("MainWindow", "Say Hi!", None))
+        self.actionStart.setText(_translate("MainWindow", "Start", None))
+        self.actionStart.setToolTip(_translate("MainWindow", "Start", None))
 
     def setvtkWidget(self):
+    	"""Set up the vtk widget"""
     	self.ren = vtk.vtkRenderer()
         self.m_widget.GetRenderWindow().AddRenderer(self.ren)
         self.iren = self.m_widget.GetRenderWindow().GetInteractor()
@@ -238,6 +273,25 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.ren.GetActiveCamera().SetViewUp(0, 0, 1)
         self.ren.GetActiveCamera().UpdateViewport(self.ren)
 
+    
+
+    def execute(self):
+		"""Timer callback function"""
+		print(self.timer_count)
+		self.plateActor.GetUserTransform().Identity()
+		self.plateActor.GetUserTransform().Translate(self.timer_count, 0.0, 0.0)
+		
+		self.iren.GetRenderWindow().Render()
+		self.timer_count += 1
+
+    def on_actionStart_triggered(self):
+    	"""Toolbar function"""
+    	self.m_label.setText("Start")
+
+    def on_m_pushButton_clicked(self):
+    	"""button function"""
+    	self.m_label.setText("Hi")
+    	self.iren.DestroyTimer(timerId)
 
 class car():
 	def __init__(self):
@@ -248,25 +302,33 @@ class car():
 	    self.X = cx
 	    self.Y = cy
 
-class vtkTimerCallback():
-	def __init__(self):
-		m_car.SetCenterPosition(0.0, 0.0)
-		self.timer_count = 0
+class MyMplCanvas(FigureCanvas):
+	"""Embed the matplotlib into the Qt"""
+	def __init__(self, parent=None, width=5, height=4, dpi=100):
+		fig = Figure(figsize=(width, height), dpi=dpi)
+		self.axes = fig.add_subplot(111)
+		self.axes.hold(False)
+		self.compute_initial_figure()
 
-	def execute(self, obj, event):
-		print(self.timer_count)
-		#self.actor.SetPosition(self.timer_count, 0.0, 0.0)
-		self.actor.GetUserTransform().Identity()
-		self.actor.GetUserTransform().Translate(float(self.timer_count)/5, 0.0, 0.0)
-		iren = obj
-		iren.GetRenderWindow().Render()
-		self.timer_count += 1
+		#
+		FigureCanvas.__init__(self, fig)
+		self.setParent(parent)
 
-	def restart(self, obj, event):
-		# The mouse interaction (zoom)stops the timer
-		# Restart the timer after the mouse interaction event
-		iren = obj
-		iren.ResetTimer(timerId)
+		FigureCanvas.setSizePolicy(self,
+			QtGui.QSizePolicy.Expanding,
+			QtGui.QSizePolicy.Expanding)
+
+		FigureCanvas.updateGeometry(self)
+
+	def compute_initial_figure(self):
+		pass
+
+class MyStaticMplCanvas(MyMplCanvas):
+	def compute_initial_figure(self):
+		t = arange(0.0, 3.0, 0.01)
+		s = sin(2*pi*t)
+		self.axes.plot(t, s)
+
 
 
 if __name__ == '__main__':
@@ -280,13 +342,9 @@ if __name__ == '__main__':
 
     m_car = car()
 
-    # Sign up to receive TimerEvent
-    cb = vtkTimerCallback()
-    cb.actor = window.plateActor
-    window.iren.AddObserver('TimerEvent', cb.execute)
-    window.iren.AddObserver('EndInteractionEvent', cb.restart)
-    timerId = window.iren.CreateRepeatingTimer(1000)
-
-    window.iren.Start()
+    # Setup timer
+    timer = QtCore.QTimer(window)
+    timer.timeout.connect(window.execute)
+    timer.start(100)
  
     sys.exit(app.exec_())

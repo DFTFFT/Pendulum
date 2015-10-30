@@ -87,25 +87,25 @@ if __name__ == '__main__':
 	M1 = 1000.0
 	M2 = 1000.0
 	L1 = 1.0
-	L2 = 1.0
+	L2 = 10.0
 	m1 = 1.0
 	m2 = 1.0
 	h1 = 1.0
-	h2 = 1.0
+	h2 = 10.0
 	M = 1.0
 	L = 2.0
 	input_para = np.array([M1, M2, L1, L2, m1, m2, h1, h2, M, L])
 
 	# Time information
 	ts = 0.0								# start time
-	te = 10.0								# end time
+	te = 1000.0								# end time
 	tstep = 0.01								# time step
 	time_info = np.array([ts, te, tstep])
 
 	# Initial condition
 	x0 = 0.0
-	th10 = 0.0873
-	th20 = -0.0873
+	th10 = 1.0
+	th20 = -0.0837
 	dx0 = 0.0
 	dth10 = 0.0
 	dth20 = 0.0
@@ -116,15 +116,20 @@ if __name__ == '__main__':
 
 	# Solve the ODE to get the trajectory of the pendulum
 	result = pendulum.solve_ode()
+
+	t = result[0, :]
 	x1 = result[1, :]
 	y1 = result[2, :]
-
-	tim = result[0, :]
+	x2 = result[3, :]
+	y2 = result[4, :]
+	x = result[5, :]
 	th1 = result[6, :]
+	th2 = result[7, :]
 
 	# Display the reuslts
-	plt.plot(x1,y1)
-	#plt.plot(tim, th1)
+	plt.plot(x1, y1,'r', x2, y2, 'b')
+	#plt.plot(t, th1, 'r', t, th2, 'b')
+	#plt.plot(t, x)
 	plt.show()
 	
 
