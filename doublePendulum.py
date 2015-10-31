@@ -12,18 +12,18 @@ class doublePendulum():
 		# Model information
 		self.M1, self.M2, self.L1, self.L2, self.m1, self.m2, self.h1, self.h2, self.M, self.L = input_para
 		# time information
-		ts, te, tstep = time_info
-		self.t = np.arange(ts, te, tstep)
+		self.ts, self.te, self.tstep = time_info
+		self.t = np.arange(self.ts, self.te, self.tstep)
 		# Initial condition
 		self.init_status = init_cond
-		# 3 generalized cooridinates
-		self.x = 0.0
-		self.th1 = 0.0
-		self.th2 = 0.0
+		# generalized cooridinates
+		self.x = self.init_status[0]
+		self.th1 = self.init_status[1]
+		self.th2 = self.init_status[2]
 
-		self.dx = 0.0
-		self.dth1 = 0.0
-		self.dth2 = 0.0
+		self.dx = self.init_status[3]
+		self.dth1 = self.init_status[4]
+		self.dth2 = self.init_status[5]
 		
 		
 	def equation(self, var, tim):
@@ -58,9 +58,9 @@ class doublePendulum():
 
 		return np.array([dx, dth1, dth2, d2x, d2th1, d2th2])
 
-
+	"""
 	def solve_ode(self):
-		""" Solve the system of the lagrange equtions describing the pendulum motion """
+		
 		solu = odeint(self.equation, self.init_status, self.t)
 
 		self.x = solu[:, 0]
@@ -78,6 +78,32 @@ class doublePendulum():
 		X = self.x + self.L / 2.0
 
 		result = np.array([self.t, X1, Y1, X2, Y2, X, self.th1, self.th2])
+
+		return result
+	"""
+
+	def solve_ode(self, t):
+		""" Solve the system of the lagrange equtions describing the pendulum motion """
+		solu = odeint(self.equation, self.init_status, t)
+
+		self.x = solu[-1, 0]
+		self.th1 = solu[-1, 1]
+		self.th2 = solu[-1, 2]
+		self.dx = solu[-1, 3]
+		self.dth1 = solu[-1, 4]
+		self.dth2 = solu[-1, 5]
+
+		# Convert the results from generalized coordinates to cartesian coordinates
+		# Sphere A
+		X1 = self.x + self.L1 * sin(self.th1)
+		Y1 = self.h1 - self.L1 * cos(self.th1)
+		# Sphere B
+		X2 = self.x + self.L + self.L2 * sin(self.th2)
+		Y2 = self.h2 - self.L2 * cos(self.th2)
+		# Cart
+		X = self.x + self.L / 2.0
+
+		result = np.array([t[-1], X1, Y1, X2, Y2, X, self.x, self.th1, self.th2, self.dx, self.dth1, self.dth2])
 
 		return result
 

@@ -36,9 +36,16 @@ except AttributeError:
 class Ui_MainWindow(QtGui.QMainWindow):
     def __init__(self):
 		QtGui.QMainWindow.__init__(self)
+		# Setup UI widgets
 		self.setupUi(self)
+		# Setup input and output data structure
 		self.input_data_pack = input_data()
+		self.result_data_pack = result_data()
+		# Setup timer
+		self.timer = QtCore.QTimer(self)
+		self.timer.timeout.connect(self.timerCallback)
 		self.timer_count = 0
+		self.current_time = 0.0
 
     def setupUi(self, MainWindow):
         # mainwindow
@@ -234,13 +241,13 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.pushButton_reset.setIcon(icon)
         self.pushButton_reset.setIconSize(QtCore.QSize(20, 20))
 
-        self.pushButton_start = QtGui.QPushButton(self.frame)
-        self.pushButton_start.setGeometry(QtCore.QRect(270, 700, 115, 35))
-        self.pushButton_start.setObjectName(_fromUtf8("pushButton_start"))
+        self.pushButton_simulate = QtGui.QPushButton(self.frame)
+        self.pushButton_simulate.setGeometry(QtCore.QRect(270, 700, 115, 35))
+        self.pushButton_simulate.setObjectName(_fromUtf8("pushButton_simulate"))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/tick_icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButton_start.setIcon(icon)
-        self.pushButton_start.setIconSize(QtCore.QSize(20, 20))
+        self.pushButton_simulate.setIcon(icon)
+        self.pushButton_simulate.setIconSize(QtCore.QSize(20, 20))
 
         # vtkWidget
         self.widget_vtk = QVTKRenderWindowInteractor(self.centralWidget)
@@ -313,6 +320,17 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.mainToolBar.addSeparator()
         self.mainToolBar.addAction(self.actionExit)
 
+		# current time display
+        self.mainToolBar.addSeparator()
+        self.lineEdit_timer = QtGui.QLineEdit(self.mainToolBar)
+        self.lineEdit_timer.setGeometry(QtCore.QRect(500, 20, 100, 40))
+        self.lineEdit_timer.setObjectName(_fromUtf8("lineEdit_timer"))
+        self.lineEdit_timer.setReadOnly(True)
+        self.lineEdit_timer.setFont(QtGui.QFont("Arial", 20, QtGui.QFont.Bold))
+        #self.mainToolBar.addWidget(self.lineEdit_timer)
+
+
+
 
         # statusBar
         self.statusBar = QtGui.QStatusBar(MainWindow)
@@ -369,7 +387,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.pushButton_import_input.setText(_translate("MainWindow", "Import Input", None))
         self.pushButton_save_result.setText(_translate("MainWindow", "Save Result", None))
         self.pushButton_reset.setText(_translate("MainWindow", "Reset", None))
-        self.pushButton_start.setText(_translate("MainWindow", "Start", None))
+        self.pushButton_simulate.setText(_translate("MainWindow", "Simulate", None))
 
         # Toolbar action
         self.actionStart.setText(_translate("MainWindow", "Start", None))
@@ -548,21 +566,53 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
     def timerCallback(self):
 		"""Timer callback function"""
+		self.timer_count += 1
 		print(self.timer_count)
+		# Display current time
+		self.current_time = self.timer_count*self.input_data_pack.tstep
+		self.lineEdit_timer.setText(str(self.current_time))
+
+		# Terminate the simulation when reaching the preset stop time		
+		if self.current_time > self.pendulum.te:
+			self.timer.stop()
+			return
+
+		# Solve the system of the Lagrange mechanical equations at current time
+		t = np.array([self.current_time-self.input_data_pack.tstep, self.current_time])
+		result = self.pendulum.solve_ode(t)
+		print result
+		
+		# Update the intial condition for next time step
+		self.pendulum.init_status = result[6:12]
+
+		# Save the result to the result data package for export
+		self.result_data_pack.addData(result)
+
+		# Update the position of the pendulums and the cart in the vtk widget
 		self.plateActor.GetUserTransform().Identity()
 		self.plateActor.GetUserTransform().Translate(self.timer_count, 0.0, 0.0)
 		
 		self.iren.GetRenderWindow().Render()
-		self.timer_count += 1
+
+		# Update the matplotlib plots
+
+		
+
+
+
+
+
+
+
 
     # Toolbar button slot
     def on_actionStart_triggered(self):
     	"""Start button slot"""
-    	timer.start(100)
+    	self.timer.start(self.input_data_pack.tstep*1000)    # Convert unit from s to ms
 
     def on_actionStop_triggered(self):
     	"""Stop button slot"""
-    	timer.stop()
+    	self.timer.stop()
 
     def on_actionExit_triggered(self):
     	"""Toolbar start button slot"""
@@ -570,13 +620,6 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
     	
     # PushButton slot
-    @QtCore.pyqtSlot() # signal with no arguments
-    def on_pushButton_start_clicked(self):
-    	"""Start button function"""
-    	self.input_data_pack.get_input_data(self)
-    	value = self.input_data_pack.M1
-    	print("hello world%f"%value)
-
     @QtCore.pyqtSlot() # signal with no arguments
     def on_pushButton_save_input_clicked(self):
     	"""Save input button function"""
@@ -612,38 +655,80 @@ class Ui_MainWindow(QtGui.QMainWindow):
     def on_pushButton_import_input_clicked(self):
     	"""Save input button function"""
     	filename = QtGui.QFileDialog.getOpenFileName(self, "Open Input file", "/home/hz")
-    	data = []
+    	if filename == "":
+    		return
+    	read_data = []
     	with open(filename, 'r') as f:
     		for line in f.readlines():
-    			data.append(float(line.strip()))
-    	print data
+    			read_data.append(float(line.strip()))
     	# Model parameter
-    	self.input_data_pack.M1 = data[0]
-    	self.input_data_pack.M2 = data[1]
-     	self.input_data_pack.m1 = data[2]
-    	self.input_data_pack.m2 = data[3]   		
-    	self.input_data_pack.L1 = data[4]
-    	self.input_data_pack.L2 = data[5]
-    	self.input_data_pack.h1 = data[6]
-    	self.input_data_pack.h2 = data[7]
-     	self.input_data_pack.M = data[8]
-    	self.input_data_pack.L = data[9]
+    	self.input_data_pack.M1 = read_data[0]
+    	self.input_data_pack.M2 = read_data[1]
+     	self.input_data_pack.m1 = read_data[2]
+    	self.input_data_pack.m2 = read_data[3]   		
+    	self.input_data_pack.L1 = read_data[4]
+    	self.input_data_pack.L2 = read_data[5]
+    	self.input_data_pack.h1 = read_data[6]
+    	self.input_data_pack.h2 = read_data[7]
+     	self.input_data_pack.M = read_data[8]
+    	self.input_data_pack.L = read_data[9]
 
     	# Init condition
-    	self.input_data_pack.x0 = data[10]
-    	self.input_data_pack.th10 = data[11]
-     	self.input_data_pack.th20 = data[12]
-    	self.input_data_pack.dx0 = data[13]   		
-    	self.input_data_pack.dth10 = data[14]
-    	self.input_data_pack.dth20 = data[15]
+    	self.input_data_pack.x0 = read_data[10]
+    	self.input_data_pack.th10 = read_data[11]
+     	self.input_data_pack.th20 = read_data[12]
+    	self.input_data_pack.dx0 = read_data[13]   		
+    	self.input_data_pack.dth10 = read_data[14]
+    	self.input_data_pack.dth20 = read_data[15]
 
     	# Time info
-    	self.input_data_pack.ts = data[16]
-    	self.input_data_pack.te = data[17]
-     	self.input_data_pack.tstep = data[18]
+    	self.input_data_pack.ts = read_data[16]
+    	self.input_data_pack.te = read_data[17]
+     	self.input_data_pack.tstep = read_data[18]
 
 		#
     	self.input_data_pack.set_input_data(self)
+
+    
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_pushButton_save_result_clicked(self):
+    	"""Save result button function"""
+    	print("save result")
+    	filename = QtGui.QFileDialog.getSaveFileName(self, "Save Input file", "/home/hz")
+    	with open(filename, 'wb') as f:
+    		f.write("Time  X1     Y1     X2     Y2     X     x     th1     th2     dx     dth1     dth2\n")
+    		N = self.result_data_pack.getLen()
+    		for i in range(N):
+    			f.write("%f     %f     %f      %f      %f     %f     %f      %f     %f     %f     %f      %f\n"
+    				%(self.result_data_pack.tim[i], self.result_data_pack.X1[i], self.result_data_pack.Y1[i],
+    					self.result_data_pack.X2[i], self.result_data_pack.Y2[i], self.result_data_pack.X[i],
+    					self.result_data_pack.x[i], self.result_data_pack.th1[i], self.result_data_pack.th2[i],
+    					self.result_data_pack.dx[i], self.result_data_pack.dth1[i], self.result_data_pack.dth2[i]))
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_pushButton_reset_clicked(self):
+    	"""Reset button function"""
+    	print("reset")
+    
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_pushButton_simulate_clicked(self):
+    	"""Simulate button function"""
+    	print("Simulate")
+
+    	# Get input data from GUI
+    	self.input_data_pack.get_input_data(self)
+
+    	# Create pendulum instance
+    	self.pendulum = doublePendulum(self.input_data_pack.input_para, \
+    		self.input_data_pack.time_info, self.input_data_pack.init_cond)
+    	
+    	# Start time advancement process
+    	self.timer.start(self.input_data_pack.tstep*1000)    # Convert unit from s to ms
+
+    	# Updata the UI widgets to display the instantenous results
+
+
+
 
 
 class input_data():
@@ -673,7 +758,7 @@ class input_data():
     	# Time information
     	self.ts = 0.0									# start time
     	self.te = 100.0									# end time
-    	self.tstep = 0.01								# time step
+    	self.tstep = 0.1								# time step
     	self.time_info = np.array([self.ts, self.te, self.tstep])
 
     def get_input_data(self, MainWindow):
@@ -732,6 +817,43 @@ class input_data():
     	MainWindow.lineEdit_time_step.setText(str(self.tstep))
 
 
+class result_data():
+	"""result_data package"""
+	def __init__(self):
+		self.tim = []
+		self.X1 = []
+		self.Y1 = []
+		self.X2 = []
+		self.Y2 = []
+		self.X = []
+
+		self.x = []
+		self.th1 = []
+		self.th2 = []
+		self.dx = []
+		self.dth1 = []
+		self.dth2 = []
+
+	def getLen(self):
+		return len(self.tim)
+
+	def addData(self, result):
+		self.tim.append(result[0])
+		self.X1.append(result[1])
+		self.Y1.append(result[2])
+		self.X2.append(result[3])
+		self.Y2.append(result[4])
+		self.X.append(result[5])
+
+		self.x.append(result[6])
+		self.th1.append(result[7])
+		self.th2.append(result[8])
+		self.dx.append(result[9])
+		self.dth1.append(result[10])
+		self.dth2.append(result[11])
+
+
+
 class MyMplCanvas(FigureCanvas):
 	"""Embed the matplotlib into the Qt"""
 	def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -753,6 +875,7 @@ class MyMplCanvas(FigureCanvas):
 	def compute_initial_figure(self):
 		pass
 
+
 class MyStaticMplCanvas(MyMplCanvas):
 	def compute_initial_figure(self):
 		t = np.arange(0.0, 3.0, 0.01)
@@ -769,12 +892,5 @@ if __name__ == '__main__':
     window.show()
 
     window.iren.Initialize()
-
-    # Setup timer
-    timer = QtCore.QTimer(window)
-    timer.timeout.connect(window.timerCallback)
-
-	# Create pendulum instance
-    #pendulum = doublePendulum(input_para, time_info, init_cond)
 
     sys.exit(app.exec_())
