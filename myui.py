@@ -37,6 +37,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
     def __init__(self):
 		QtGui.QMainWindow.__init__(self)
 		self.setupUi(self)
+		self.input_data_pack = input_data()
 		self.timer_count = 0
 
     def setupUi(self, MainWindow):
@@ -211,7 +212,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
         self.pushButton_import_input = QtGui.QPushButton(self.frame)
         self.pushButton_import_input.setGeometry(QtCore.QRect(140, 630, 115, 35))
-        self.pushButton_import_input.setObjectName(_fromUtf8("pushButton_save_result"))
+        self.pushButton_import_input.setObjectName(_fromUtf8("pushButton_import_input"))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/Import_Data.jpg")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushButton_import_input.setIcon(icon)
@@ -219,7 +220,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
         self.pushButton_save_result = QtGui.QPushButton(self.frame)
         self.pushButton_save_result.setGeometry(QtCore.QRect(270, 630, 115, 35))
-        self.pushButton_save_result.setObjectName(_fromUtf8("pushButton_start"))
+        self.pushButton_save_result.setObjectName(_fromUtf8("pushButton_save_result"))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/save_icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushButton_save_result.setIcon(icon)
@@ -556,28 +557,180 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
     # Toolbar button slot
     def on_actionStart_triggered(self):
-    	"""Toolbar start button slot"""
+    	"""Start button slot"""
     	timer.start(100)
+
+    def on_actionStop_triggered(self):
+    	"""Stop button slot"""
+    	timer.stop()
 
     def on_actionExit_triggered(self):
     	"""Toolbar start button slot"""
     	self.close()
 
     	
+    # PushButton slot
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_pushButton_start_clicked(self):
+    	"""Start button function"""
+    	self.input_data_pack.get_input_data(self)
+    	value = self.input_data_pack.M1
+    	print("hello world%f"%value)
 
-    def on_m_pushButton_clicked(self):
-    	"""button function"""
-    	self.m_label.setText("Hi")
-    	self.iren.DestroyTimer(timerId)
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_pushButton_save_input_clicked(self):
+    	"""Save input button function"""
+    	self.input_data_pack.get_input_data(self)
+    	filename = QtGui.QFileDialog.getSaveFileName(self, "Save Input file", "/home/hz")
+    	with open(filename, 'wb') as f:
+    		# Model parameter
+    		f.write("%f\n"%self.input_data_pack.M1)
+    		f.write("%f\n"%self.input_data_pack.M2)
+     		f.write("%f\n"%self.input_data_pack.m1)
+    		f.write("%f\n"%self.input_data_pack.m2)   		
+    		f.write("%f\n"%self.input_data_pack.L1)
+    		f.write("%f\n"%self.input_data_pack.L2)
+    		f.write("%f\n"%self.input_data_pack.h1)
+    		f.write("%f\n"%self.input_data_pack.h2)
+     		f.write("%f\n"%self.input_data_pack.M)
+    		f.write("%f\n"%self.input_data_pack.L)
 
-class cart():
-	def __init__(self):
-		self.X = 0.0
-		self.Y = 0.0
+    		# Init condition
+    		f.write("%f\n"%self.input_data_pack.x0)
+    		f.write("%f\n"%self.input_data_pack.th10)
+     		f.write("%f\n"%self.input_data_pack.th20)
+    		f.write("%f\n"%self.input_data_pack.dx0)   		
+    		f.write("%f\n"%self.input_data_pack.dth10)
+    		f.write("%f\n"%self.input_data_pack.dth20)
 
-	def SetCenterPosition(self, cx, cy):
-	    self.X = cx
-	    self.Y = cy
+    		# Time info
+    		f.write("%f\n"%self.input_data_pack.ts)
+    		f.write("%f\n"%self.input_data_pack.te)
+     		f.write("%f\n"%self.input_data_pack.tstep)	
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_pushButton_import_input_clicked(self):
+    	"""Save input button function"""
+    	filename = QtGui.QFileDialog.getOpenFileName(self, "Open Input file", "/home/hz")
+    	data = []
+    	with open(filename, 'r') as f:
+    		for line in f.readlines():
+    			data.append(float(line.strip()))
+    	print data
+    	# Model parameter
+    	self.input_data_pack.M1 = data[0]
+    	self.input_data_pack.M2 = data[1]
+     	self.input_data_pack.m1 = data[2]
+    	self.input_data_pack.m2 = data[3]   		
+    	self.input_data_pack.L1 = data[4]
+    	self.input_data_pack.L2 = data[5]
+    	self.input_data_pack.h1 = data[6]
+    	self.input_data_pack.h2 = data[7]
+     	self.input_data_pack.M = data[8]
+    	self.input_data_pack.L = data[9]
+
+    	# Init condition
+    	self.input_data_pack.x0 = data[10]
+    	self.input_data_pack.th10 = data[11]
+     	self.input_data_pack.th20 = data[12]
+    	self.input_data_pack.dx0 = data[13]   		
+    	self.input_data_pack.dth10 = data[14]
+    	self.input_data_pack.dth20 = data[15]
+
+    	# Time info
+    	self.input_data_pack.ts = data[16]
+    	self.input_data_pack.te = data[17]
+     	self.input_data_pack.tstep = data[18]
+
+		#
+    	self.input_data_pack.set_input_data(self)
+
+
+class input_data():
+    def __init__(self):
+		# Model parameters
+    	self.M1 = 1000.0
+    	self.M2 = 1000.0
+    	self.L1 = 1.0
+    	self.L2 = 10.0
+    	self.m1 = 1.0
+    	self.m2 = 1.0
+    	self.h1 = 1.0
+    	self.h2 = 10.0
+    	self.M = 1.0
+    	self.L = 2.0
+    	self.input_para = np.array([self.M1, self.M2, self.L1, self.L2, self.m1, self.m2, self.h1, self.h2, self.M, self.L])
+
+		# Initial condition
+    	self.x0 = 0.0
+    	self.th10 = 1.0
+    	self.th20 = -1.0
+    	self.dx0 = 0.0
+    	self.dth10 = 0.0
+    	self.dth20 = 0.0
+    	self.init_cond = np.array([self.x0, self.th10, self.th20, self.dx0, self.dth10, self.dth20])
+
+    	# Time information
+    	self.ts = 0.0									# start time
+    	self.te = 100.0									# end time
+    	self.tstep = 0.01								# time step
+    	self.time_info = np.array([self.ts, self.te, self.tstep])
+
+    def get_input_data(self, MainWindow):
+    	# Model parameters (from table widget)
+    	self.M1 = MainWindow.tableWidget.item(0, 0).text().toDouble()[0]
+    	self.M2 = MainWindow.tableWidget.item(1, 0).text().toDouble()[0]
+    	self.m1 = MainWindow.tableWidget.item(0, 1).text().toDouble()[0]
+    	self.m2 = MainWindow.tableWidget.item(1, 1).text().toDouble()[0]
+    	self.L1 = MainWindow.tableWidget.item(0, 2).text().toDouble()[0]
+    	self.L2 = MainWindow.tableWidget.item(1, 2).text().toDouble()[0]    	
+    	self.h1 = MainWindow.tableWidget.item(0, 3).text().toDouble()[0]
+    	self.h2 = MainWindow.tableWidget.item(1, 3).text().toDouble()[0]
+    	self.M = MainWindow.lineEdit_Cart_M.text().toDouble()[0]
+    	self.L = MainWindow.lineEdit_Cart_L.text().toDouble()[0]
+    	self.input_para = np.array([self.M1, self.M2, self.L1, self.L2, self.m1, self.m2, self.h1, self.h2, self.M, self.L])
+
+		# Initial condition
+    	self.x0 = MainWindow.lineEdit_init_x.text().toDouble()[0]
+    	self.th10 = MainWindow.lineEdit_init_th1.text().toDouble()[0]
+    	self.th20 = MainWindow.lineEdit_init_th2.text().toDouble()[0]
+    	self.dx0 = MainWindow.lineEdit_init_vx.text().toDouble()[0]
+    	self.dth10 = MainWindow.lineEdit_init_w1.text().toDouble()[0]
+    	self.dth20 = MainWindow.lineEdit_init_w2.text().toDouble()[0]
+    	self.init_cond = np.array([self.x0, self.th10, self.th20, self.dx0, self.dth10, self.dth20])
+
+    	# Time information
+    	self.ts = MainWindow.lineEdit_time_start.text().toDouble()[0]
+    	self.te = MainWindow.lineEdit_time_end.text().toDouble()[0]
+    	self.tstep = MainWindow.lineEdit_time_step.text().toDouble()[0]
+    	self.time_info = np.array([self.ts, self.te, self.tstep])
+
+    def set_input_data(self, MainWindow):
+    	# Model parameters (from table widget)
+    	MainWindow.tableWidget.setItem(0, 0, QtGui.QTableWidgetItem(str(self.M1)))
+    	MainWindow.tableWidget.setItem(1, 0, QtGui.QTableWidgetItem(str(self.M2)))
+    	MainWindow.tableWidget.setItem(0, 1, QtGui.QTableWidgetItem(str(self.m1)))
+    	MainWindow.tableWidget.setItem(1, 1, QtGui.QTableWidgetItem(str(self.m2)))
+    	MainWindow.tableWidget.setItem(0, 2, QtGui.QTableWidgetItem(str(self.L1)))
+    	MainWindow.tableWidget.setItem(1, 2, QtGui.QTableWidgetItem(str(self.L2)))  	
+    	MainWindow.tableWidget.setItem(0, 3, QtGui.QTableWidgetItem(str(self.h1)))
+    	MainWindow.tableWidget.setItem(1, 3, QtGui.QTableWidgetItem(str(self.h2)))
+    	MainWindow.lineEdit_Cart_M.setText(str(self.M))
+    	MainWindow.lineEdit_Cart_L.setText(str(self.L))
+
+		# Initial condition
+    	MainWindow.lineEdit_init_x.setText(str(self.x0))
+    	MainWindow.lineEdit_init_th1.setText(str(self.th10))
+    	MainWindow.lineEdit_init_th2.setText(str(self.th20))
+    	MainWindow.lineEdit_init_vx.setText(str(self.dx0))
+    	MainWindow.lineEdit_init_w1.setText(str(self.dth10))
+    	MainWindow.lineEdit_init_w2.setText(str(self.dth20))
+
+    	# Time information
+    	MainWindow.lineEdit_time_start.setText(str(self.ts))
+    	MainWindow.lineEdit_time_end.setText(str(self.te))
+    	MainWindow.lineEdit_time_step.setText(str(self.tstep))
+
 
 class MyMplCanvas(FigureCanvas):
 	"""Embed the matplotlib into the Qt"""
@@ -617,43 +770,11 @@ if __name__ == '__main__':
 
     window.iren.Initialize()
 
-    m_cart = cart()
-
     # Setup timer
     timer = QtCore.QTimer(window)
     timer.timeout.connect(window.timerCallback)
-    
-
-    # Input
-    # Model parameters
-    M1 = 1000.0
-    M2 = 1000.0
-    L1 = 1.0
-    L2 = 10.0
-    m1 = 1.0
-    m2 = 1.0
-    h1 = 1.0
-    h2 = 10.0
-    M = 1.0
-    L = 2.0
-    input_para = np.array([M1, M2, L1, L2, m1, m2, h1, h2, M, L])
-
-	# Time information
-    ts = 0.0								# start time
-    te = 1000.0								# end time
-    tstep = 0.01								# time step
-    time_info = np.array([ts, te, tstep])
-
-	# Initial condition
-    x0 = 0.0
-    th10 = 1.0
-    th20 = -0.0837
-    dx0 = 0.0
-    dth10 = 0.0
-    dth20 = 0.0
-    init_cond = np.array([x0, th10, th20, dx0, dth10, dth20])
 
 	# Create pendulum instance
-    pendulum = doublePendulum(input_para, time_info, init_cond)
+    #pendulum = doublePendulum(input_para, time_info, init_cond)
 
     sys.exit(app.exec_())
