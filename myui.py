@@ -46,6 +46,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.timer.timeout.connect(self.timerCallback)
 		self.timer_count = 0
 		self.current_time = 0.0
+		self.len_convert_factor = 100.0   # 1m = 100 pixels
 
     def setupUi(self, MainWindow):
         # mainwindow
@@ -209,24 +210,24 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.label_pos.setObjectName(_fromUtf8("label_pos"))
 
         # Functional Button
-        self.pushButton_save_input = QtGui.QPushButton(self.frame)
-        self.pushButton_save_input.setGeometry(QtCore.QRect(10, 630, 115, 35))
-        self.pushButton_save_input.setObjectName(_fromUtf8("pushButton_save_input"))
+        self.pushButton_export_input = QtGui.QPushButton(self.frame)
+        self.pushButton_export_input.setGeometry(QtCore.QRect(10, 630, 115, 35))
+        self.pushButton_export_input.setObjectName(_fromUtf8("pushButton_export_input"))
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/export_database_icon.jpg")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButton_save_input.setIcon(icon)
-        self.pushButton_save_input.setIconSize(QtCore.QSize(20, 20))
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/export_database_icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.pushButton_export_input.setIcon(icon)
+        self.pushButton_export_input.setIconSize(QtCore.QSize(20, 20))
 
         self.pushButton_import_input = QtGui.QPushButton(self.frame)
-        self.pushButton_import_input.setGeometry(QtCore.QRect(140, 630, 115, 35))
+        self.pushButton_import_input.setGeometry(QtCore.QRect(130, 630, 115, 35))
         self.pushButton_import_input.setObjectName(_fromUtf8("pushButton_import_input"))
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/Import_Data.jpg")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/download-database.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushButton_import_input.setIcon(icon)
         self.pushButton_import_input.setIconSize(QtCore.QSize(20, 20))
 
         self.pushButton_save_result = QtGui.QPushButton(self.frame)
-        self.pushButton_save_result.setGeometry(QtCore.QRect(270, 630, 115, 35))
+        self.pushButton_save_result.setGeometry(QtCore.QRect(250, 630, 115, 35))
         self.pushButton_save_result.setObjectName(_fromUtf8("pushButton_save_result"))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/save_icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -234,15 +235,23 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.pushButton_save_result.setIconSize(QtCore.QSize(20, 20))
 
         self.pushButton_reset = QtGui.QPushButton(self.frame)
-        self.pushButton_reset.setGeometry(QtCore.QRect(140, 700, 115, 35))
+        self.pushButton_reset.setGeometry(QtCore.QRect(10, 700, 115, 35))
         self.pushButton_reset.setObjectName(_fromUtf8("pushButton_reset"))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/refresh.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushButton_reset.setIcon(icon)
         self.pushButton_reset.setIconSize(QtCore.QSize(20, 20))
 
+        self.pushButton_initialize = QtGui.QPushButton(self.frame)
+        self.pushButton_initialize.setGeometry(QtCore.QRect(130, 700, 115, 35))
+        self.pushButton_initialize.setObjectName(_fromUtf8("pushButton_initialize"))
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/iconvert.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.pushButton_initialize.setIcon(icon)
+        self.pushButton_initialize.setIconSize(QtCore.QSize(20, 20))       
+
         self.pushButton_simulate = QtGui.QPushButton(self.frame)
-        self.pushButton_simulate.setGeometry(QtCore.QRect(270, 700, 115, 35))
+        self.pushButton_simulate.setGeometry(QtCore.QRect(250, 700, 115, 35))
         self.pushButton_simulate.setObjectName(_fromUtf8("pushButton_simulate"))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/tick_icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -294,6 +303,24 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.actionStop.setIcon(icon)
         self.actionStop.setObjectName(_fromUtf8("actionStop"))
 
+        self.actionExportInput = QtGui.QAction(MainWindow)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/export_database_icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionExportInput.setIcon(icon)
+        self.actionExportInput.setObjectName(_fromUtf8("actionExportInput"))
+
+        self.actionImportInput = QtGui.QAction(MainWindow)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/download-database.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionImportInput.setIcon(icon)
+        self.actionImportInput.setObjectName(_fromUtf8("actionImportInput"))
+
+        self.actionSaveResult = QtGui.QAction(MainWindow)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/save_icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionSaveResult.setIcon(icon)
+        self.actionSaveResult.setObjectName(_fromUtf8("actionSaveResult"))
+
         self.actionHelp = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/khelpcenter.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -312,8 +339,35 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.actionExit.setIcon(icon)
         self.actionExit.setObjectName(_fromUtf8("actionExit"))
 
+        self.actionInit = QtGui.QAction(MainWindow)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/iconvert.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionInit.setIcon(icon)
+        self.actionInit.setObjectName(_fromUtf8("actionInit"))
+
+        self.actionSimulate = QtGui.QAction(MainWindow)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/tick_icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionSimulate.setIcon(icon)
+        self.actionSimulate.setObjectName(_fromUtf8("actionSimulate"))
+
+        self.actionReset = QtGui.QAction(MainWindow)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/refresh.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionReset.setIcon(icon)
+        self.actionReset.setObjectName(_fromUtf8("actionReset"))
+
+       
+        self.mainToolBar.addAction(self.actionImportInput)
+        self.mainToolBar.addAction(self.actionExportInput)
+        self.mainToolBar.addSeparator()
+        self.mainToolBar.addAction(self.actionInit)
+        self.mainToolBar.addAction(self.actionSimulate)
+        self.mainToolBar.addAction(self.actionReset)
+        self.mainToolBar.addSeparator()
         self.mainToolBar.addAction(self.actionStart)
-        self.mainToolBar.addAction(self.actionStop)
+        self.mainToolBar.addAction(self.actionStop)  
+        self.mainToolBar.addAction(self.actionSaveResult)
         self.mainToolBar.addSeparator()
         self.mainToolBar.addAction(self.actionHelp)
         self.mainToolBar.addAction(self.actionAbout)
@@ -323,7 +377,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		# current time display
         self.mainToolBar.addSeparator()
         self.lineEdit_timer = QtGui.QLineEdit(self.mainToolBar)
-        self.lineEdit_timer.setGeometry(QtCore.QRect(500, 20, 100, 40))
+        self.lineEdit_timer.setGeometry(QtCore.QRect(1000, 20, 100, 40))
         self.lineEdit_timer.setObjectName(_fromUtf8("lineEdit_timer"))
         self.lineEdit_timer.setReadOnly(True)
         self.lineEdit_timer.setFont(QtGui.QFont("Arial", 20, QtGui.QFont.Bold))
@@ -383,10 +437,11 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.checkBox_camera_sideview.setText(_translate("MainWindow", "side view", None))
         self.label_pos.setText(_translate("MainWindow", "position", None))
 
-        self.pushButton_save_input.setText(_translate("MainWindow", "Save Input", None))
+        self.pushButton_export_input.setText(_translate("MainWindow", "Export Input", None))
         self.pushButton_import_input.setText(_translate("MainWindow", "Import Input", None))
         self.pushButton_save_result.setText(_translate("MainWindow", "Save Result", None))
         self.pushButton_reset.setText(_translate("MainWindow", "Reset", None))
+        self.pushButton_initialize.setText(_translate("MainWindow", "Initialize", None))
         self.pushButton_simulate.setText(_translate("MainWindow", "Simulate", None))
 
         # Toolbar action
@@ -394,12 +449,25 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.actionStart.setToolTip(_translate("MainWindow", "Start", None))
         self.actionStop.setText(_translate("MainWindow", "Stop", None))
         self.actionStop.setToolTip(_translate("MainWindow", "Stop", None))
+        self.actionExportInput.setText(_translate("MainWindow", "Export Input", None))
+        self.actionExportInput.setToolTip(_translate("MainWindow", "Export Input", None))
+        self.actionImportInput.setText(_translate("MainWindow", "Import Input", None))
+        self.actionImportInput.setToolTip(_translate("MainWindow", "Import Input", None))
+        self.actionSaveResult.setText(_translate("MainWindow", "SaveResult", None))
+        self.actionSaveResult.setToolTip(_translate("MainWindow", "SaveResult", None))                     
         self.actionHelp.setText(_translate("MainWindow", "Help", None))
         self.actionHelp.setToolTip(_translate("MainWindow", "Help", None))
         self.actionAbout.setText(_translate("MainWindow", "About", None))
         self.actionAbout.setToolTip(_translate("MainWindow", "About", None))
         self.actionExit.setText(_translate("MainWindow", "Exit", None))
         self.actionExit.setToolTip(_translate("MainWindow", "Exit", None))
+        self.actionInit.setText(_translate("MainWindow", "Initialize", None))
+        self.actionInit.setToolTip(_translate("MainWindow", "Initialize", None))
+        self.actionSimulate.setText(_translate("MainWindow", "Simulate", None))
+        self.actionSimulate.setToolTip(_translate("MainWindow", "Simulate", None))
+        self.actionReset.setText(_translate("MainWindow", "Reset", None))
+        self.actionReset.setToolTip(_translate("MainWindow", "Reset", None))
+
 
     def setvtkWidget(self):
     	"""Set up the vtk widget"""
@@ -410,15 +478,15 @@ class Ui_MainWindow(QtGui.QMainWindow):
         # The cart model (includes a plate, two poles and four wheel)
         # Plate of the cart
         # Create source
-        plate = vtk.vtkCubeSource()
-        plate.SetXLength(100)
-        plate.SetYLength(60)
-        plate.SetZLength(6)
-        plate.SetCenter(50, 0, -3)
+        self.plate = vtk.vtkCubeSource()
+        self.plate.SetXLength(100)
+        self.plate.SetYLength(60)
+        self.plate.SetZLength(6)
+        self.plate.SetCenter(50, 0, -3)
  
         # Create a mapper
         plateMapper = vtk.vtkPolyDataMapper()
-        plateMapper.SetInputConnection(plate.GetOutputPort())
+        plateMapper.SetInputConnection(self.plate.GetOutputPort())
 
         # Create a transform
         plateTransform = vtk.vtkTransform()
@@ -434,71 +502,71 @@ class Ui_MainWindow(QtGui.QMainWindow):
         # Two poles
         # Left pole
         # Create source
-        poleL = vtk.vtkCylinderSource()
-        poleL.SetRadius(1.0)
-        poleL.SetHeight(50.0)
-        poleL.SetCenter(10, 0, 0)
-        poleL.SetResolution(100.0)
+        self.poleL = vtk.vtkCylinderSource()
+        self.poleL.SetRadius(1.0)
+        self.poleL.SetHeight(50.0)
+        self.poleL.SetCenter(10, 0, 0)
+        self.poleL.SetResolution(100.0)
 
         # Create a mapper
         poleLMapper = vtk.vtkPolyDataMapper()
-        poleLMapper.SetInputConnection(poleL.GetOutputPort())
+        poleLMapper.SetInputConnection(self.poleL.GetOutputPort())
 
         # Create a transform
-        poleLTransform = vtk.vtkTransform()
-        poleLTransform.SetInput(plateTransform)
+        self.poleLTransform = vtk.vtkTransform()
+        self.poleLTransform.SetInput(plateTransform)
 
         # Create an actor
         poleLActor = vtk.vtkActor()
         poleLActor.SetMapper(poleLMapper)
-        poleLActor.SetUserTransform(poleLTransform)
+        poleLActor.SetUserTransform(self.poleLTransform)
 
-        poleLTransform.RotateX(90.0)
-        poleLTransform.Translate(0.0, 25.0, 0.0)
+        self.poleLTransform.RotateX(90.0)
+        self.poleLTransform.Translate(0.0, 25.0, 0.0)
 
         self.ren.AddActor(poleLActor)
 
         # Right pole
         # Create source
-        poleR = vtk.vtkCylinderSource()
-        poleR.SetRadius(1.0)
-        poleR.SetHeight(50.0)
-        poleR.SetCenter(90, 0, 0)
-        poleR.SetResolution(100.0)
+        self.poleR = vtk.vtkCylinderSource()
+        self.poleR.SetRadius(1.0)
+        self.poleR.SetHeight(50.0)
+        self.poleR.SetCenter(90, 0, 0)
+        self.poleR.SetResolution(100.0)
 
         # Create a mapper
         poleRMapper = vtk.vtkPolyDataMapper()
-        poleRMapper.SetInputConnection(poleR.GetOutputPort())
+        poleRMapper.SetInputConnection(self.poleR.GetOutputPort())
 
         # Create a transform
-        poleRTransform = vtk.vtkTransform()
-        poleRTransform.SetInput(plateTransform)
+        self.poleRTransform = vtk.vtkTransform()
+        self.poleRTransform.SetInput(plateTransform)
 
         # Create an actor
         poleRActor = vtk.vtkActor()
         poleRActor.SetMapper(poleRMapper)
-        poleRActor.SetUserTransform(poleRTransform)
+        poleRActor.SetUserTransform(self.poleRTransform)
 
-        poleRTransform.RotateX(90.0)
-        poleRTransform.Translate(0.0, 25.0, 0.0)
+        self.poleRTransform.RotateX(90.0)
+        self.poleRTransform.Translate(0.0, 25.0, 0.0)
 
         self.ren.AddActor(poleRActor)
 
         # 4 cart's wheels
-        wheel = []
+        self.wheel = []
         wheelMapper = []
         wheelTransform = []
         wheelActor = []
         for i in range(4):
         	# Create source
-            wheel.append(vtk.vtkCylinderSource())
-            wheel[i].SetRadius(6.0)
-            wheel[i].SetHeight(3.0)
-            wheel[i].SetResolution(100.0)
+            self.wheel.append(vtk.vtkCylinderSource())
+            self.wheel[i].SetRadius(6.0)
+            self.wheel[i].SetHeight(3.0)
+            self.wheel[i].SetResolution(100.0)
 
         	# Create a mapper
             wheelMapper.append(vtk.vtkPolyDataMapper())
-            wheelMapper[i].SetInputConnection(wheel[i].GetOutputPort())
+            wheelMapper[i].SetInputConnection(self.wheel[i].GetOutputPort())
 
             # Create a transform
             wheelTransform.append(vtk.vtkTransform())
@@ -512,46 +580,46 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
             self.ren.AddActor(wheelActor[i])
         
-        wheel[0].SetCenter(10, 25, -9.0)
-        wheel[1].SetCenter(90, 25, -9.0)
-        wheel[2].SetCenter(10, -25, -9.0)
-        wheel[3].SetCenter(90, -25, -9.0)
+        self.wheel[0].SetCenter(10, 25, -9.0)
+        self.wheel[1].SetCenter(90, 25, -9.0)
+        self.wheel[2].SetCenter(10, -25, -9.0)
+        self.wheel[3].SetCenter(90, -25, -9.0)
 
 
         # Two spheres' model
         # Left sphere
         # Create source
-        sphereL = vtk.vtkSphereSource()
-        sphereL.SetRadius(5)
-        sphereL.SetCenter(0, 0, 30)
+        self.sphereL = vtk.vtkSphereSource()
+        self.sphereL.SetRadius(5)
+        self.sphereL.SetCenter(0, 0, 30)
 
         # Create a mapper
         sphereLMapper = vtk.vtkPolyDataMapper()
-        sphereLMapper.SetInputConnection(sphereL.GetOutputPort())
+        sphereLMapper.SetInputConnection(self.sphereL.GetOutputPort())
 
         # Create an actor
-        sphereLActor = vtk.vtkActor()
-        sphereLActor.SetMapper(sphereLMapper)
-        sphereLActor.GetProperty().SetColor(1.0, 0.2, 0.2)
+        self.sphereLActor = vtk.vtkActor()
+        self.sphereLActor.SetMapper(sphereLMapper)
+        self.sphereLActor.GetProperty().SetColor(1.0, 0.2, 0.2)
 
-        self.ren.AddActor(sphereLActor)
+        self.ren.AddActor(self.sphereLActor)
 
         # Right sphere
         # Create source
-        sphereR = vtk.vtkSphereSource()
-        sphereR.SetRadius(5)
-        sphereR.SetCenter(100, 0, 30)
+        self.sphereR = vtk.vtkSphereSource()
+        self.sphereR.SetRadius(5)
+        self.sphereR.SetCenter(100, 0, 30)
 
         # Create a mapper
         sphereRMapper = vtk.vtkPolyDataMapper()
-        sphereRMapper.SetInputConnection(sphereR.GetOutputPort())
+        sphereRMapper.SetInputConnection(self.sphereR.GetOutputPort())
 
         # Create an actor
-        sphereRActor = vtk.vtkActor()
-        sphereRActor.SetMapper(sphereRMapper)
-        sphereRActor.GetProperty().SetColor(0.0, 0.5, 1.0)
+        self.sphereRActor = vtk.vtkActor()
+        self.sphereRActor.SetMapper(sphereRMapper)
+        self.sphereRActor.GetProperty().SetColor(0.0, 0.5, 1.0)
 
-        self.ren.AddActor(sphereRActor)
+        self.ren.AddActor(self.sphereRActor)
 
         # Create a camera
         #self.ren.ResetCamera()
@@ -583,14 +651,27 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		print result
 		
 		# Update the intial condition for next time step
-		self.pendulum.init_status = result[6:12]
+		self.pendulum.init_status = result[6:12]   # Note the end index is 12 but not 11
 
 		# Save the result to the result data package for export
 		self.result_data_pack.addData(result)
 
+		# Unpack the result data
+		tim, X1, Y1, X2, Y2, X, x, th1, th2, dx, dth1, dth2 = result
+
 		# Update the position of the pendulums and the cart in the vtk widget
+		# Cart
 		self.plateActor.GetUserTransform().Identity()
-		self.plateActor.GetUserTransform().Translate(self.timer_count, 0.0, 0.0)
+		self.plateActor.GetUserTransform().Translate(x*self.len_convert_factor, 0.0, 0.0)
+		# Two pendulums
+		# It seems to have some problems by using the SetPosition function
+		#self.sphereLActor.SetPosition(X1*self.len_convert_factor, 0.0, Y1*self.len_convert_factor)
+		#self.sphereRActor.SetPosition(X2*self.len_convert_factor, 0.0, Y2*self.len_convert_factor)
+
+		self.sphereL.SetCenter(X1*self.len_convert_factor, 0.0, Y1*self.len_convert_factor)
+		self.sphereR.SetCenter(X2*self.len_convert_factor, 0.0, Y2*self.len_convert_factor)
+		print("X2=%f"%X2)
+
 		
 		self.iren.GetRenderWindow().Render()
 
@@ -618,13 +699,21 @@ class Ui_MainWindow(QtGui.QMainWindow):
     	"""Toolbar start button slot"""
     	self.close()
 
+    def on_actionInit_triggered(self):
+    	"""Toolbar start button slot"""
+    	
+
+
+
     	
     # PushButton slot
     @QtCore.pyqtSlot() # signal with no arguments
-    def on_pushButton_save_input_clicked(self):
-    	"""Save input button function"""
+    def on_pushButton_export_input_clicked(self):
+    	"""Export input button function"""
     	self.input_data_pack.get_input_data(self)
-    	filename = QtGui.QFileDialog.getSaveFileName(self, "Save Input file", "/home/hz")
+    	filename = QtGui.QFileDialog.getSaveFileName(self, "Export Input file", "/home/hz")
+    	if filename == "":
+    		return
     	with open(filename, 'wb') as f:
     		# Model parameter
     		f.write("%f\n"%self.input_data_pack.M1)
@@ -653,7 +742,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
     @QtCore.pyqtSlot() # signal with no arguments
     def on_pushButton_import_input_clicked(self):
-    	"""Save input button function"""
+    	"""Import input button function"""
     	filename = QtGui.QFileDialog.getOpenFileName(self, "Open Input file", "/home/hz")
     	if filename == "":
     		return
@@ -694,7 +783,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
     def on_pushButton_save_result_clicked(self):
     	"""Save result button function"""
     	print("save result")
-    	filename = QtGui.QFileDialog.getSaveFileName(self, "Save Input file", "/home/hz")
+    	filename = QtGui.QFileDialog.getSaveFileName(self, "Save result file", "/home/hz")
     	with open(filename, 'wb') as f:
     		f.write("Time  X1     Y1     X2     Y2     X     x     th1     th2     dx     dth1     dth2\n")
     		N = self.result_data_pack.getLen()
@@ -704,6 +793,62 @@ class Ui_MainWindow(QtGui.QMainWindow):
     					self.result_data_pack.X2[i], self.result_data_pack.Y2[i], self.result_data_pack.X[i],
     					self.result_data_pack.x[i], self.result_data_pack.th1[i], self.result_data_pack.th2[i],
     					self.result_data_pack.dx[i], self.result_data_pack.dth1[i], self.result_data_pack.dth2[i]))
+
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_pushButton_initialize_clicked(self):
+    	"""Initialize button function"""
+    	print("intialize")
+    	# Get input data from GUI
+    	self.input_data_pack.get_input_data(self)
+
+    	# Update the cart dimension in the vtkwidget based on the input data
+    	# plate
+    	platelen = 0.1+self.input_data_pack.L+0.1
+    	self.plate.SetXLength(platelen*self.len_convert_factor)
+    	platepos = self.input_data_pack.x0+0.5*self.input_data_pack.L
+    	self.plate.SetCenter(platepos*self.len_convert_factor, 0, -3)
+    	# pole
+    	# Left pole
+    	poleLpos = self.input_data_pack.x0
+    	self.poleL.SetCenter(poleLpos*self.len_convert_factor, 0.0, 0.0)
+    	poleLlen = self.input_data_pack.h1
+    	poleLlen_old = self.poleL.GetHeight()/self.len_convert_factor
+    	self.poleL.SetHeight(poleLlen*self.len_convert_factor)
+    	self.poleLTransform.Translate(0, (poleLlen-poleLlen_old)/2*self.len_convert_factor, 0)
+    	# Right pole
+    	poleRpos = self.input_data_pack.x0+self.input_data_pack.L
+    	self.poleR.SetCenter(poleRpos*self.len_convert_factor, 0.0, 0.0)
+    	poleRlen = self.input_data_pack.h2
+    	poleRlen_old = self.poleR.GetHeight()/self.len_convert_factor
+    	self.poleR.SetHeight(poleRlen*self.len_convert_factor)
+    	self.poleRTransform.Translate(0, (poleRlen-poleRlen_old)/2*self.len_convert_factor, 0)
+    	# 4 wheels
+    	self.wheel[0].SetCenter((platepos-self.input_data_pack.L/2)*self.len_convert_factor, 25, -9.0)
+    	self.wheel[1].SetCenter((platepos+self.input_data_pack.L/2)*self.len_convert_factor, 25, -9.0)
+    	self.wheel[2].SetCenter((platepos-self.input_data_pack.L/2)*self.len_convert_factor, -25, -9.0)
+    	self.wheel[3].SetCenter((platepos+self.input_data_pack.L/2)*self.len_convert_factor, -25, -9.0)
+    	# Two shperes
+    	#self.sphereLActor.SetPosition(0, 0, 0)
+    	sphereLpos_x = self.input_data_pack.x0+self.input_data_pack.L1*sin(self.input_data_pack.th10)
+    	sphereLpos_y = self.input_data_pack.h1-self.input_data_pack.L1*cos(self.input_data_pack.th10)
+    	self.sphereL.SetCenter(sphereLpos_x*self.len_convert_factor, 0, sphereLpos_y*self.len_convert_factor)
+
+    	sphereRpos_x = self.input_data_pack.x0+self.input_data_pack.L+self.input_data_pack.L2*sin(self.input_data_pack.th20)
+    	sphereRpos_y = self.input_data_pack.h2-self.input_data_pack.L2*cos(self.input_data_pack.th20)
+    	self.sphereR.SetCenter(sphereRpos_x*self.len_convert_factor, 0, sphereRpos_y*self.len_convert_factor)
+
+
+
+
+
+    	# Update the vtkwidget view
+    	self.iren.GetRenderWindow().Render()
+
+
+
+
+
 
     @QtCore.pyqtSlot() # signal with no arguments
     def on_pushButton_reset_clicked(self):

@@ -84,6 +84,7 @@ class doublePendulum():
 
 	def solve_ode(self, t):
 		""" Solve the system of the lagrange equtions describing the pendulum motion """
+		# t is two-element array
 		solu = odeint(self.equation, self.init_status, t)
 
 		self.x = solu[-1, 0]
