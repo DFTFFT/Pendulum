@@ -274,6 +274,10 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.plot_trace.setObjectName(_fromUtf8("plot_trace"))
         self.plot_trace.axes.set_xlim(-1, 3)
         self.plot_trace.axes.set_ylim(-1, 3)
+        #self.plot_trace.lines[0].set_color('red')     # it doesn't work?
+        #self.plot_trace.lines[1].set_color('blue')
+        self.plot_trace.fig.legend((self.plot_trace.lines[0],self.plot_trace.lines[1]),('Left sphere','Right sphere'),(0.15, 0.76))
+
 
         self.plot_angle = MyMplCanvas(self.centralWidget, width=1, height=1, dpi=50, Ndim=2)
         self.plot_angle.setObjectName(_fromUtf8("plot_angle"))
@@ -695,7 +699,6 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		# Solve the system of the Lagrange mechanical equations at current time
 		t = np.array([self.current_time-self.input_data_pack.tstep, self.current_time])
 		result = self.pendulum.solve_ode(t)
-		print result
 		
 		# Update the intial condition for next time step
 		self.pendulum.init_status = result[6:12]   # Note the end index is 12 but not 11
@@ -709,7 +712,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		# Update the position of the pendulums and the cart in the vtk widget
 		# Cart
 		self.plateActor.GetUserTransform().Identity()
-		self.plateActor.GetUserTransform().Translate(x*self.len_convert_factor, 0.0, 0.0)
+		self.plateActor.GetUserTransform().Translate((x-self.input_data_pack.x0)*self.len_convert_factor, 0.0, 0.0)
 		# Two pendulums
 		# It seems to have some problems by using the SetPosition function
 		#self.sphereLActor.SetPosition(X1*self.len_convert_factor, 0.0, Y1*self.len_convert_factor)
@@ -858,7 +861,6 @@ class Ui_MainWindow(QtGui.QMainWindow):
     @QtCore.pyqtSlot() # signal with no arguments
     def on_pushButton_save_result_clicked(self):
     	"""Save result button function"""
-    	print("save result")
     	filename = QtGui.QFileDialog.getSaveFileName(self, "Save result file", "/home/hz")
     	with open(filename, 'wb') as f:
     		f.write("Time  X1     Y1     X2     Y2     X     x     th1     th2     dx     dth1     dth2\n")
@@ -874,7 +876,6 @@ class Ui_MainWindow(QtGui.QMainWindow):
     @QtCore.pyqtSlot() # signal with no arguments
     def on_pushButton_initialize_clicked(self):
     	"""Initialize button function"""
-    	print("intialize")
     	# Get input data from GUI
     	self.input_data_pack.get_input_data(self)
 
@@ -884,6 +885,8 @@ class Ui_MainWindow(QtGui.QMainWindow):
     	self.plate.SetXLength(platelen*self.len_convert_factor)
     	platepos = self.input_data_pack.x0+0.5*self.input_data_pack.L
     	self.plate.SetCenter(platepos*self.len_convert_factor, 0, -3)
+    	self.plateActor.GetUserTransform().Identity()
+    	self.plateActor.GetUserTransform().Translate(0.0, 0.0, 0.0)
     	# pole
     	# Left pole
     	poleLpos = self.input_data_pack.x0
@@ -921,6 +924,25 @@ class Ui_MainWindow(QtGui.QMainWindow):
     	self.LineR.SetPoint2(sphereRpos_x*self.len_convert_factor, 0, sphereRpos_y*self.len_convert_factor)
 
 
+    	#
+    	# clean the plot view
+    	self.plot_trace.clearAxia()
+    	self.plot_trace.axes.set_xlim(-1, 3)
+    	self.plot_trace.axes.set_ylim(-1, 3)
+
+    	self.plot_angle.clearAxia()
+    	self.plot_angle.axes.set_xlim(0, 10)
+    	self.plot_angle.axes.set_ylim(-1.6, 1.6)
+
+    	self.plot_cart_pos.clearAxia()
+    	self.plot_cart_pos.axes.set_xlim(0, 10)
+    	self.plot_cart_pos.axes.set_ylim(-3, 3)
+
+    	# initialize the current time
+    	self.current_time = 0.0
+    	self.timer_count = 0
+    	self.lineEdit_timer.setText(str(self.current_time))
+
     	# Update the vtkwidget view
     	self.iren.GetRenderWindow().Render()
 
@@ -932,13 +954,60 @@ class Ui_MainWindow(QtGui.QMainWindow):
     @QtCore.pyqtSlot() # signal with no arguments
     def on_pushButton_reset_clicked(self):
     	"""Reset button function"""
-    	print("reset")
+    	# reset the timer
+    	self.current_time = 0.0
+    	self.timer_count = 0
+    	self.lineEdit_timer.setText(str(self.current_time))
+
+    	# Get input data from GUI
+    	self.input_data_pack.get_input_data(self)
+
+    	# reset the vtkwidget (remove the transform effect on the cart and reset the pendulum)
+    	self.plateActor.GetUserTransform().Identity()
+    	self.plateActor.GetUserTransform().Translate(0.0, 0.0, 0.0)
+
+    	# Two shperes
+    	sphereLpos_x = self.input_data_pack.x0+self.input_data_pack.L1*sin(self.input_data_pack.th10)
+    	sphereLpos_y = self.input_data_pack.h1-self.input_data_pack.L1*cos(self.input_data_pack.th10)
+    	self.sphereL.SetCenter(sphereLpos_x*self.len_convert_factor, 0, sphereLpos_y*self.len_convert_factor)
+
+    	sphereRpos_x = self.input_data_pack.x0+self.input_data_pack.L+self.input_data_pack.L2*sin(self.input_data_pack.th20)
+    	sphereRpos_y = self.input_data_pack.h2-self.input_data_pack.L2*cos(self.input_data_pack.th20)
+    	self.sphereR.SetCenter(sphereRpos_x*self.len_convert_factor, 0, sphereRpos_y*self.len_convert_factor)
+    	# Two poles (use two lines stead)
+    	platepos = self.input_data_pack.x0+0.5*self.input_data_pack.L
+    	poleLlen = self.input_data_pack.h1
+    	poleRlen = self.input_data_pack.h2
+    	self.LineL.SetPoint1((platepos-self.input_data_pack.L/2)*self.len_convert_factor, 0, poleLlen*self.len_convert_factor)
+    	self.LineL.SetPoint2(sphereLpos_x*self.len_convert_factor, 0, sphereLpos_y*self.len_convert_factor)
+
+    	self.LineR.SetPoint1((platepos+self.input_data_pack.L/2)*self.len_convert_factor, 0, poleRlen*self.len_convert_factor)
+    	self.LineR.SetPoint2(sphereRpos_x*self.len_convert_factor, 0, sphereRpos_y*self.len_convert_factor)
+
+
+    	# clean the plot view
+    	self.plot_trace.clearAxia()
+    	self.plot_trace.axes.set_xlim(-1, 3)
+    	self.plot_trace.axes.set_ylim(-1, 3)
+
+    	self.plot_angle.clearAxia()
+    	self.plot_angle.axes.set_xlim(0, 10)
+    	self.plot_angle.axes.set_ylim(-1.6, 1.6)
+
+    	self.plot_cart_pos.clearAxia()
+    	self.plot_cart_pos.axes.set_xlim(0, 10)
+    	self.plot_cart_pos.axes.set_ylim(-3, 3)
+
+
+    	# update the view
+    	self.iren.GetRenderWindow().Render()
+
+
+
     
     @QtCore.pyqtSlot() # signal with no arguments
     def on_pushButton_simulate_clicked(self):
     	"""Simulate button function"""
-    	print("Simulate")
-
     	# Get input data from GUI
     	self.input_data_pack.get_input_data(self)
 
@@ -1157,7 +1226,22 @@ class MyMplCanvas(FigureCanvas):
 		self.axes.set_xlim(xlim_min, xlim_max)
 		self.axes.set_ylim(ylim_min, ylim_max)	
 
+	def clearAxia(self):
+		self.axes.cla()
 
+		self.lines = []
+		self.xdata = []
+		self.ydata = []
+		for i in range(self.NLine):
+			self.xdata.append([])
+			self.ydata.append([])
+			line, = self.axes.plot([], [])
+			self.lines.append(line)
+
+		self.axes.set_xlim(-1, 3)
+		self.axes.set_ylim(-1, 3)
+
+		self.draw()
 
 
 
