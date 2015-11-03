@@ -11,6 +11,7 @@ import sys
 import vtk
 from PyQt4 import QtCore, QtGui
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from doublePendulum import doublePendulum
@@ -269,14 +270,20 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.setvtkWidget()
 
         # Matplotlib plot
-        self.plot_trace = MyStaticMplCanvas(self.centralWidget, width=1, height=1, dpi=50)
+        self.plot_trace = MyMplCanvas(self.centralWidget, width=1, height=1, dpi=50, Ndim=2)
         self.plot_trace.setObjectName(_fromUtf8("plot_trace"))
+        self.plot_trace.axes.set_xlim(-1, 3)
+        self.plot_trace.axes.set_ylim(-1, 3)
 
-        self.plot_angle = MyStaticMplCanvas(self.centralWidget, width=1, height=1, dpi=50)
+        self.plot_angle = MyMplCanvas(self.centralWidget, width=1, height=1, dpi=50, Ndim=2)
         self.plot_angle.setObjectName(_fromUtf8("plot_angle"))
+        self.plot_angle.axes.set_xlim(0, 10)
+        self.plot_angle.axes.set_ylim(-1.6, 1.6)
 
-        self.plot_cart_pos = MyStaticMplCanvas(self.centralWidget, width=1, height=1, dpi=50)
-        self.plot_cart_pos.setObjectName(_fromUtf8("plot_cart_pos"))        
+        self.plot_cart_pos = MyMplCanvas(self.centralWidget, width=1, height=1, dpi=50, Ndim=1)
+        self.plot_cart_pos.setObjectName(_fromUtf8("plot_cart_pos"))
+        self.plot_cart_pos.axes.set_xlim(0, 10)
+        self.plot_cart_pos.axes.set_ylim(-3, 3)      
 
         # MenuBar
         self.menuBar = QtGui.QMenuBar(MainWindow)
@@ -621,6 +628,39 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
         self.ren.AddActor(self.sphereRActor)
 
+        # Two poles (connected to the spheres, use lines stead)
+        # Left
+        self.LineL = vtk.vtkLineSource()
+        self.LineL.SetPoint1(10, 0, 50)
+        self.LineL.SetPoint2(0, 0, 30)
+
+        LineLMapper = vtk.vtkPolyDataMapper()
+        LineLMapper.SetInput(self.LineL.GetOutput())
+        #LineLMapper.SetInputConnection(self.LineL.GetOutputPort())
+
+        LineLActor = vtk.vtkActor()
+        LineLActor.SetMapper(LineLMapper)
+        #LineLActor.GetProperty().SetColor(1.0, 0.0, 0.0)
+        LineLActor.GetProperty().SetLineWidth(5)
+
+        self.ren.AddActor(LineLActor)
+
+        # RighR
+        self.LineR = vtk.vtkLineSource()
+        self.LineR.SetPoint1(90, 0, 50)
+        self.LineR.SetPoint2(100, 0, 30)
+
+        LineRMapper = vtk.vtkPolyDataMapper()
+        LineRMapper.SetInput(self.LineR.GetOutput())
+        #LineRMapper.SetInputConnection(self.LineR.GetOutputPort())
+
+        LineRActor = vtk.vtkActor()
+        LineRActor.SetMapper(LineRMapper)
+        #LineLActor.GetProperty().SetColor(1.0, 0.0, 0.0)
+        LineLActor.GetProperty().SetLineWidth(5)
+
+        self.ren.AddActor(LineRActor)
+
         # Create a camera
         #self.ren.ResetCamera()
         camera = vtk.vtkCamera()
@@ -629,6 +669,13 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.ren.GetActiveCamera().SetFocalPoint(50, 0, 0)
         self.ren.GetActiveCamera().SetViewUp(0, 0, 1)
         self.ren.GetActiveCamera().UpdateViewport(self.ren)
+
+
+
+
+
+
+
 
     
 
@@ -670,12 +717,41 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
 		self.sphereL.SetCenter(X1*self.len_convert_factor, 0.0, Y1*self.len_convert_factor)
 		self.sphereR.SetCenter(X2*self.len_convert_factor, 0.0, Y2*self.len_convert_factor)
-		print("X2=%f"%X2)
 
+		# Two ropes
+		self.LineL.SetPoint1((X-self.input_data_pack.L/2)*self.len_convert_factor, 0, self.poleL.GetHeight())
+		self.LineL.SetPoint2(X1*self.len_convert_factor, 0.0, Y1*self.len_convert_factor)
+
+		self.LineR.SetPoint1((X+self.input_data_pack.L/2)*self.len_convert_factor, 0, self.poleR.GetHeight())
+		self.LineR.SetPoint2(X2*self.len_convert_factor, 0.0, Y2*self.len_convert_factor)
 		
+		# Update the vtk view
 		self.iren.GetRenderWindow().Render()
 
 		# Update the matplotlib plots
+		# plot_trace
+		self.plot_trace.updateFig([[X1, Y1], [X2, Y2]])
+		# Setup the figure properties
+
+		self.plot_trace.axes.set_title("Trace of the pendulums", fontsize = 25)
+		self.plot_trace.axes.set_xlabel("x/m", fontsize = 15)
+		self.plot_trace.axes.set_ylabel("y/m", fontsize = 15)
+
+		# plot_angle
+		self.plot_angle.updateFig([[tim, th1], [tim, th2]])
+
+		self.plot_angle.axes.set_title("Angle of the pendulums", fontsize = 25)
+		self.plot_angle.axes.set_xlabel("Time/sec", fontsize = 15)
+		self.plot_angle.axes.set_ylabel("Angle/rad", fontsize = 15)
+
+		# plot_cart_pos
+		self.plot_cart_pos.updateFig([[tim, X]])
+
+		self.plot_cart_pos.axes.set_title("Position of the cart", fontsize = 25)
+		self.plot_cart_pos.axes.set_xlabel("Time/sec", fontsize = 15)
+		self.plot_cart_pos.axes.set_ylabel("Position/m", fontsize = 15)
+
+
 
 		
 
@@ -837,9 +913,12 @@ class Ui_MainWindow(QtGui.QMainWindow):
     	sphereRpos_x = self.input_data_pack.x0+self.input_data_pack.L+self.input_data_pack.L2*sin(self.input_data_pack.th20)
     	sphereRpos_y = self.input_data_pack.h2-self.input_data_pack.L2*cos(self.input_data_pack.th20)
     	self.sphereR.SetCenter(sphereRpos_x*self.len_convert_factor, 0, sphereRpos_y*self.len_convert_factor)
+    	# Two poles (use two lines stead)
+    	self.LineL.SetPoint1((platepos-self.input_data_pack.L/2)*self.len_convert_factor, 0, poleLlen*self.len_convert_factor)
+    	self.LineL.SetPoint2(sphereLpos_x*self.len_convert_factor, 0, sphereLpos_y*self.len_convert_factor)
 
-
-
+    	self.LineR.SetPoint1((platepos+self.input_data_pack.L/2)*self.len_convert_factor, 0, poleRlen*self.len_convert_factor)
+    	self.LineR.SetPoint2(sphereRpos_x*self.len_convert_factor, 0, sphereRpos_y*self.len_convert_factor)
 
 
     	# Update the vtkwidget view
@@ -1001,14 +1080,26 @@ class result_data():
 
 class MyMplCanvas(FigureCanvas):
 	"""Embed the matplotlib into the Qt"""
-	def __init__(self, parent=None, width=5, height=4, dpi=100):
-		fig = Figure(figsize=(width, height), dpi=dpi)
-		self.axes = fig.add_subplot(111)
-		self.axes.hold(False)
-		self.compute_initial_figure()
+	def __init__(self, parent=None, width=5, height=4, dpi=100, Ndim=1):
+		self.fig = Figure(figsize=(width, height), dpi=dpi)
+		self.axes = self.fig.add_subplot(111)
+		#self.axes.hold(False)
+
+		self.NLine = Ndim			# Number of lines in this plot
+		self.lines = []
+		self.xdata = []
+		self.ydata = []
+		for i in range(self.NLine):
+			self.xdata.append([])
+			self.ydata.append([])
+			line, = self.axes.plot([], [])
+			self.lines.append(line)
+
+		self.axes.set_xlim(-1, 3)
+		self.axes.set_ylim(-1, 3)
 
 		#
-		FigureCanvas.__init__(self, fig)
+		FigureCanvas.__init__(self, self.fig)
 		self.setParent(parent)
 
 		#FigureCanvas.setSizePolicy(self,
@@ -1017,15 +1108,56 @@ class MyMplCanvas(FigureCanvas):
 
 		#FigureCanvas.updateGeometry(self)
 
-	def compute_initial_figure(self):
-		pass
+	def updateFig(self, data):
+		# add the new data points and update the plot
+		for i in range(self.NLine):
+			self.xdata[i].append(data[i][0])
+			self.ydata[i].append(data[i][1])
+			self.lines[i].set_data(self.xdata[i], self.ydata[i])
+		
+		# Update the figure canvas
+		self.updateAxisRange()
+		self.draw()
+
+	def updateAxisRange(self):
+		xlim_min, xlim_max = self.axes.get_xlim()
+		ylim_min, ylim_max = self.axes.get_ylim()
+		Xmax = np.amax(self.xdata, axis=0)[-1]
+		Xmin = np.amin(self.xdata, axis=0)[-1]
+		Ymax = np.amax(self.ydata, axis=0)[-1]
+		Ymin = np.amin(self.ydata, axis=0)[-1]
+
+		# X limit
+		if Xmin < xlim_min:
+			if Xmin > 0:
+				xlim_min = Xmin/2.0
+			else:
+				xlim_min = Xmin*2.0
+
+		if Xmax > xlim_max:
+			if Xmax > 0:
+				xlim_max = Xmax*2.0
+			else:
+				xlim_max = Xmax/2.0
+
+		# Y limit
+		if Ymin < ylim_min:
+			if Ymin > 0:
+				ylim_min = Ymin/2.0
+			else:
+				ylim_min = Ymin*2.0
+
+		if Ymax > ylim_max:
+			if Ymax > 0:
+				ylim_max = Ymax*2.0
+			else:
+				ylim_max = Ymax/2.0
 
 
-class MyStaticMplCanvas(MyMplCanvas):
-	def compute_initial_figure(self):
-		t = np.arange(0.0, 3.0, 0.01)
-		s = sin(2*3.14*t)
-		self.axes.plot(t, s)
+		self.axes.set_xlim(xlim_min, xlim_max)
+		self.axes.set_ylim(ylim_min, ylim_max)	
+
+
 
 
 
