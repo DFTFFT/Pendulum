@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from doublePendulum import doublePendulum
+from aboutdialogui import Ui_AboutDialog
+from helpdlgui import Ui_HelpDialog
 
 import numpy as np
 from scipy import sin, cos
@@ -48,6 +50,8 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.timer_count = 0
 		self.current_time = 0.0
 		self.len_convert_factor = 100.0   # 1m = 100 pixels
+		# Setup camera control
+		self.camCtl = cameraCtl()
 
     def setupUi(self, MainWindow):
         # mainwindow
@@ -194,17 +198,38 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.groupBox_view.setStyleSheet("QGroupBox{border: 1px solid rgb(192, 192, 192); border-radius:9px; font: bold}"
         	+"QGroupBox::title{subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px}")
 
-        self.checkBox_camera_track = QtGui.QCheckBox(self.groupBox_view)
-        self.checkBox_camera_track.setGeometry(QtCore.QRect(20, 30, 98, 22))
-        self.checkBox_camera_track.setObjectName(_fromUtf8("checkBox_camera_track"))
-        self.checkBox_camera_sideview = QtGui.QCheckBox(self.groupBox_view)
-        self.checkBox_camera_sideview.setGeometry(QtCore.QRect(20, 60, 98, 22))
-        self.checkBox_camera_sideview.setObjectName(_fromUtf8("checkBox_camera_sideview"))
+        #self.radioButton_default = QtGui.QRadioButton(self.groupBox_view)
+        #self.radioButton_default.setGeometry(QtCore.QRect(20, 30, 131, 22))
+        #self.radioButton_default.setObjectName(_fromUtf8("radioButton_default"))
+        #self.radioButton_default.setChecked(True)
 
-        self.horizontalSlider_pos = QtGui.QSlider(self.groupBox_view)
-        self.horizontalSlider_pos.setGeometry(QtCore.QRect(100, 90, 241, 29))
-        self.horizontalSlider_pos.setOrientation(QtCore.Qt.Horizontal)
-        self.horizontalSlider_pos.setObjectName(_fromUtf8("horizontalSlider_pos"))
+        #self.radioButton_sideview = QtGui.QRadioButton(self.groupBox_view)
+        #self.radioButton_sideview.setGeometry(QtCore.QRect(20, 60, 131, 22))
+        #self.radioButton_sideview.setObjectName(_fromUtf8("radioButton_sideview"))       
+
+        self.pushButton_update_cam = QtGui.QPushButton(self.groupBox_view)
+        self.pushButton_update_cam.setGeometry(QtCore.QRect(20, 30, 80, 30))
+        self.pushButton_update_cam.setObjectName(_fromUtf8("pushButton_update_cam"))
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("Icon/camera.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.pushButton_update_cam.setIcon(icon)
+        self.pushButton_update_cam.setIconSize(QtCore.QSize(25, 25))
+
+        self.checkBox_display_axes = QtGui.QCheckBox(self.groupBox_view)
+        self.checkBox_display_axes.setGeometry(QtCore.QRect(180, 30, 110, 22))
+        self.checkBox_display_axes.setObjectName(_fromUtf8("checkBox_display_axes"))
+
+        self.checkBox_sideview = QtGui.QCheckBox(self.groupBox_view)
+        self.checkBox_sideview.setGeometry(QtCore.QRect(180, 60, 110, 22))
+        self.checkBox_sideview.setObjectName(_fromUtf8("checkBox_sideview"))
+
+        self.horizontalSlider_elevation = QtGui.QSlider(self.groupBox_view)
+        self.horizontalSlider_elevation.setGeometry(QtCore.QRect(100, 90, 241, 29))
+        self.horizontalSlider_elevation.setOrientation(QtCore.Qt.Horizontal)
+        self.horizontalSlider_elevation.setObjectName(_fromUtf8("horizontalSlider_elevation"))
+        self.horizontalSlider_elevation.setMinimum(0)
+        self.horizontalSlider_elevation.setMaximum(100)
+        self.horizontalSlider_elevation.setTickInterval(10)
 
         self.label_pos = QtGui.QLabel(self.groupBox_view)
         self.label_pos.setGeometry(QtCore.QRect(20, 100, 67, 17))
@@ -369,8 +394,8 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.actionReset.setObjectName(_fromUtf8("actionReset"))
 
        
-        self.mainToolBar.addAction(self.actionImportInput)
         self.mainToolBar.addAction(self.actionExportInput)
+        self.mainToolBar.addAction(self.actionImportInput)
         self.mainToolBar.addSeparator()
         self.mainToolBar.addAction(self.actionInit)
         self.mainToolBar.addAction(self.actionSimulate)
@@ -387,8 +412,13 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
 		# current time display
         self.mainToolBar.addSeparator()
+        self.label_currenttime = QtGui.QLabel(self.mainToolBar)
+        self.label_currenttime.setGeometry(QtCore.QRect(1000, 25, 60, 30))
+        self.label_currenttime.setObjectName(_fromUtf8("label_currenttime"))
+        self.label_currenttime.setStyleSheet("QLabel{font-weight: bold; font-size: 22px}")
+
         self.lineEdit_timer = QtGui.QLineEdit(self.mainToolBar)
-        self.lineEdit_timer.setGeometry(QtCore.QRect(1000, 20, 100, 40))
+        self.lineEdit_timer.setGeometry(QtCore.QRect(1070, 20, 100, 40))
         self.lineEdit_timer.setObjectName(_fromUtf8("lineEdit_timer"))
         self.lineEdit_timer.setReadOnly(True)
         self.lineEdit_timer.setFont(QtGui.QFont("Arial", 20, QtGui.QFont.Bold))
@@ -444,9 +474,12 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.label_time_step.setText(_translate("MainWindow", "tstep", None))
 
         self.groupBox_view.setTitle(_translate("MainWindow", "Camera View", None))
-        self.checkBox_camera_track.setText(_translate("MainWindow", "tracking", None))
-        self.checkBox_camera_sideview.setText(_translate("MainWindow", "side view", None))
+        self.checkBox_display_axes.setText(_translate("MainWindow", "Display Axes", None))
+        self.checkBox_sideview.setText(_translate("MainWindow", "Sideview", None))
         self.label_pos.setText(_translate("MainWindow", "position", None))
+        #self.radioButton_default.setText(_translate("MainWindow", "Default view", None))
+        #self.radioButton_sideview.setText(_translate("MainWindow", "Side view", None))
+        self.pushButton_update_cam.setText(_translate("MainWindow", "Update", None))
 
         self.pushButton_export_input.setText(_translate("MainWindow", "Export Input", None))
         self.pushButton_import_input.setText(_translate("MainWindow", "Import Input", None))
@@ -479,10 +512,13 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.actionReset.setText(_translate("MainWindow", "Reset", None))
         self.actionReset.setToolTip(_translate("MainWindow", "Reset", None))
 
+        self.label_currenttime.setText(_translate("MainWindow", "Time:", None))
+
 
     def setvtkWidget(self):
     	"""Set up the vtk widget"""
     	self.ren = vtk.vtkRenderer()
+    	self.ren.SetBackground(0.1, 0.2, 0.3)
         self.widget_vtk.GetRenderWindow().AddRenderer(self.ren)
         self.iren = self.widget_vtk.GetRenderWindow().GetInteractor()
  
@@ -665,28 +701,35 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
         self.ren.AddActor(LineRActor)
 
+        # Coordinate axes and ticks
+        self.axes = vtk.vtkAxesActor()
+        self.axes.SetTotalLength(100, 100, 100)
+        #self.axes.SetShaftTypeToLine()
+        self.axes.SetConeRadius(0.1)
+        axesTransform = vtk.vtkTransform()
+        axesTransform.Translate(0.0, 0.0, -50.0)
+        self.axes.SetUserTransform(axesTransform)
+        self.axes.AxisLabelsOff()
+        #self.ren.AddActor(self.axes) 
+
         # Create a camera
         #self.ren.ResetCamera()
-        camera = vtk.vtkCamera()
+        camera = vtk.vtkCamera()    
         self.ren.SetActiveCamera(camera)
         self.ren.GetActiveCamera().SetPosition(50, -300, 100)
         self.ren.GetActiveCamera().SetFocalPoint(50, 0, 0)
         self.ren.GetActiveCamera().SetViewUp(0, 0, 1)
         self.ren.GetActiveCamera().UpdateViewport(self.ren)
-
-
-
-
-
-
-
-
-    
+        #
+        #camera.UseHorizontalViewAngleOn()
+        #camera.SetViewAngle(40.0)
+        #print("Distance=%f"%camera.GetDistance())
+  
 
     def timerCallback(self):
 		"""Timer callback function"""
 		self.timer_count += 1
-		print(self.timer_count)
+		#print(self.timer_count)
 		# Display current time
 		self.current_time = self.timer_count*self.input_data_pack.tstep
 		self.lineEdit_timer.setText(str(self.current_time))
@@ -727,6 +770,9 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
 		self.LineR.SetPoint1((X+self.input_data_pack.L/2)*self.len_convert_factor, 0, self.poleR.GetHeight())
 		self.LineR.SetPoint2(X2*self.len_convert_factor, 0.0, Y2*self.len_convert_factor)
+
+		# Update the camera view
+		#self.camCtl.updateCamera(self)
 		
 		# Update the vtk view
 		self.iren.GetRenderWindow().Render()
@@ -755,32 +801,93 @@ class Ui_MainWindow(QtGui.QMainWindow):
 		self.plot_cart_pos.axes.set_ylabel("Position/m", fontsize = 15)
 
 
-
-		
-
-
-
-
-
-
-
-
     # Toolbar button slot
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_actionExportInput_triggered(self):
+    	"""Toolbar export input button slot"""
+    	self.on_pushButton_export_input_clicked()
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_actionImportInput_triggered(self):
+    	"""Toolbar import input button slot"""
+    	self.on_pushButton_import_input_clicked()
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_actionInit_triggered(self):
+    	"""Toolbar init button slot"""
+    	self.on_pushButton_initialize_clicked()
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_actionSimulate_triggered(self):
+    	"""Toolbar simulate button slot"""
+    	self.on_pushButton_simulate_clicked()
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_actionReset_triggered(self):
+    	"""Toolbar reset button slot"""
+    	self.on_pushButton_reset_clicked()
+
+    @QtCore.pyqtSlot() # signal with no arguments
     def on_actionStart_triggered(self):
-    	"""Start button slot"""
+    	"""Toolbar start button slot"""
     	self.timer.start(self.input_data_pack.tstep*1000)    # Convert unit from s to ms
 
+    @QtCore.pyqtSlot() # signal with no arguments
     def on_actionStop_triggered(self):
-    	"""Stop button slot"""
+    	"""Toolbar stop button slot"""
     	self.timer.stop()
 
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_actionSaveResult_triggered(self):
+    	"""Toolbar save-result button slot"""
+    	self.on_pushButton_save_result_clicked()
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_actionHelp_triggered(self):
+    	"""Toolbar help button slot"""
+    	helpDlg = Ui_HelpDialog()
+    	helpDlg.setModal(True)
+    	helpDlg.exec_()
+
+    @QtCore.pyqtSlot() # signal with no arguments
     def on_actionExit_triggered(self):
-    	"""Toolbar start button slot"""
+    	"""Toolbar exit button slot"""
     	self.close()
 
-    def on_actionInit_triggered(self):
-    	"""Toolbar start button slot"""
-    	
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_actionAbout_triggered(self):
+    	"""Toolbar about button slot"""
+    	aboutDlg = Ui_AboutDialog()
+    	aboutDlg.setModal(True)
+    	aboutDlg.exec_()
+
+
+    # CheckBox slot
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_checkBox_sideview_clicked(self):
+    	"""Sideview checkBox slot"""
+    	if self.checkBox_sideview.isChecked():
+    		self.camCtl.bool_sideview = True
+    	else:
+    		self.camCtl.bool_sideview = False
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_checkBox_display_axes_clicked(self):
+    	"""Display Axes"""
+    	if self.checkBox_display_axes.isChecked():
+    		self.ren.AddActor(self.axes)
+    	else:	
+    		self.ren.RemoveActor(self.axes)
+
+    	self.iren.GetRenderWindow().Render()
+
+
+    # horizontal slide slot
+    #@QtCore.pyqtSlot() # signal with no arguments
+    # Note that there is one argument passed to the slot
+    def on_horizontalSlider_elevation_valueChanged(self, value):
+    	"""Camara elevation"""
+    	self.camCtl.elev(value, self)
 
 
 
@@ -948,9 +1055,6 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
 
 
-
-
-
     @QtCore.pyqtSlot() # signal with no arguments
     def on_pushButton_reset_clicked(self):
     	"""Reset button function"""
@@ -1003,8 +1107,6 @@ class Ui_MainWindow(QtGui.QMainWindow):
     	self.iren.GetRenderWindow().Render()
 
 
-
-    
     @QtCore.pyqtSlot() # signal with no arguments
     def on_pushButton_simulate_clicked(self):
     	"""Simulate button function"""
@@ -1019,6 +1121,15 @@ class Ui_MainWindow(QtGui.QMainWindow):
     	self.timer.start(self.input_data_pack.tstep*1000)    # Convert unit from s to ms
 
     	# Updata the UI widgets to display the instantenous results
+
+
+    @QtCore.pyqtSlot() # signal with no arguments
+    def on_pushButton_update_cam_clicked(self):
+    	"""Update camera button function"""
+    	self.camCtl.updateCamera(self)
+
+
+
 
 
 
@@ -1243,6 +1354,58 @@ class MyMplCanvas(FigureCanvas):
 
 		self.draw()
 
+class cameraCtl():
+	"""Control the camera view"""
+	def __init__(self):
+		self.bool_sideview = False
+		self.bool_track = False
+
+		self.cx = 0.0
+		self.cy = -300.0
+		self.cz = 0.0
+
+	def updateCamera(self, MainWindow):
+		
+		if self.bool_sideview:
+			camera = MainWindow.ren.GetActiveCamera()
+			self.cz = 0.0
+			self.cy = -300.0
+
+			if len(MainWindow.result_data_pack.X) == 0:
+				self.cx = (MainWindow.input_data_pack.x0+0.5*MainWindow.input_data_pack.L)*MainWindow.len_convert_factor
+			else:
+				self.cx = MainWindow.result_data_pack.X[-1]
+
+			# update the camera view
+			camera.SetPosition(self.cx, self.cy, self.cz)
+			camera.SetFocalPoint(self.cx, 0, 0)
+			camera.SetViewUp(0, 0, 1)
+
+			MainWindow.ren.GetActiveCamera().UpdateViewport(MainWindow.ren)
+
+		# key line: to adjust the actor within the camera view range
+		MainWindow.ren.ResetCamera()
+		# Updatet the mainwindow
+		MainWindow.iren.GetRenderWindow().Render()
+			
+
+	def elev(self, value, MainWindow):
+		# for elevation the rotated angle is accumulated
+		#angle = (float(value)/MainWindow.horizontalSlider_elevation.maximum()-0.5)*2.0*np.pi
+		#angle = np.pi/4.0
+		#print("angle=%f"%angle)
+		#MainWindow.ren.GetActiveCamera().Elevation(angle)
+		#MainWindow.ren.GetActiveCamera().UpdateViewport(MainWindow.ren)
+		#MainWindow.iren.GetRenderWindow().Render()
+
+		ele = float(value)/MainWindow.horizontalSlider_elevation.maximum()*300.0
+		cx, cy, cz = MainWindow.ren.GetActiveCamera().GetPosition()
+		cz = ele
+
+		MainWindow.ren.GetActiveCamera().SetPosition(cx, cy, cz)
+		MainWindow.ren.GetActiveCamera().UpdateViewport(MainWindow.ren)
+		MainWindow.iren.GetRenderWindow().Render()	
+		
 
 
 if __name__ == '__main__':
