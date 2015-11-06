@@ -1,0 +1,4 @@
+set(RESOURCE ${CMAKE_CURRENT_SOURCE_DIR}/icon.qrc)
+
+qt5_add_resources(RESOURCE_ADDED ${RESOURCE})
+
